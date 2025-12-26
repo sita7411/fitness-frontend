@@ -1,0 +1,28 @@
+/* Sidebar scroll hidden but scrollable */
+.sidebar-custom {
+  overflow-y: auto; /* allow scrolling */
+  height: 100vh; /* full height */
+  position: sticky;
+  top: 4;
+  bottom :4;
+}
+
+/* Firefox */
+.sidebar-custom {
+  scrollbar-width: none; /* hide scrollbar */
+  -ms-overflow-style: none; /* IE 10+ */
+}
+
+/* WebKit browsers (Chrome, Safari, Edge) */
+.sidebar-custom::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
+
+.sidebar-custom::-webkit-scrollbar-thumb {
+  background: transparent;
+}
+
+.sidebar-custom::-webkit-scrollbar-track {
+  background: transparent;
+}

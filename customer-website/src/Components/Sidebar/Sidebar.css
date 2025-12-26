@@ -1,0 +1,67 @@
+/* Hide Scrollbar */
+.sidebar-custom::-webkit-scrollbar {
+  width: 0px;
+}
+.sidebar-custom {
+  scrollbar-width: none;
+}
+
+/* MOBILE SIDEBAR ANIMATION */
+.sidebar-custom {
+  transition: transform 0.35s ease-in-out;
+}
+
+/* Closed by default on mobile */
+@media (max-width: 768px) {
+  .sidebar-custom {
+    position: fixed;
+    top: 5px;
+    left: 5px;
+    transform: translateX(-110%);
+    z-index: 1000;
+    margin: 0;
+    height: 187vh;
+  }
+
+  .sidebar-custom.sidebar-open {
+    transform: translateX(0%);
+  }
+}
+
+/* Hamburger Button */
+.hamburger-btn {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  padding: 8px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  z-index: 1200;
+}
+
+/* Close Button Inside Sidebar */
+.close-btn {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  background: #f4f4f4;
+  border-radius: 50%;
+  padding: 6px;
+}
+
+/* OVERLAY */
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: 0.3s;
+  z-index: 900;
+}
+
+.sidebar-overlay.show {
+  opacity: 1;
+  pointer-events: all;
+}
