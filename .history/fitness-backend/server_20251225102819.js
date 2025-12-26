@@ -1,0 +1,1 @@
+origin: true,                  // ← Yeh line badlo (sab allow karega local dev mein)

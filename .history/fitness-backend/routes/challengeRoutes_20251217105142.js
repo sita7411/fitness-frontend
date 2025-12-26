@@ -1,0 +1,62 @@
+import express from "express";
+import multer from "multer";
+import { v2 as cloudinary } from "cloudinary";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+
+import {
+  createChallenge,
+  updateChallenge,
+  getChallenges,
+  getChallengeById,
+  deleteChallenge,
+  getUserChallenges,
+  completeChallenge,
+} from "../controllers/challengeController.js";
+
+import { protect } from "../middleware/auth.js";
+import { adminAuth } from "../middleware/adminAuth.js";
+
+const router = express.Router();
+
+// ==================== CLOUDINARY CONFIG ====================
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// Multer + Cloudinary Storage Setup
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "challenges", // Cloudinary folder name
+    allowed_formats: ["jpg", "jpeg", "png", "webp", "gif"],
+    transformation: [{ width: 1200, height: 675, crop: "limit" }], // optional resize
+    public_id: (req, file) => {
+      // Unique filename
+      const timestamp = Date.now();
+      const random = Math.round(Math.random() * 1e9);
+      const originalName = file.originalname.split(".")[0];
+      return `${originalName}-${timestamp}-${random}`;
+    },
+  },
+});
+
+const upload = multer({ storage });
+
+// ==================== ROUTES ====================
+
+// Public routes
+router.get("/", getChallenges);
+router.get("/user", protect, getUserChallenges);
+router.get("/:id", getChallengeById);
+
+// Admin routes with Cloudinary upload
+// upload.any() accepts any number of files with any fieldname
+router.post("/create", adminAuth, upload.any(), createChallenge);
+router.put("/:id", adminAuth, upload.any(), updateChallenge);
+router.delete("/:id", adminAuth, deleteChallenge);
+
+router.patch("/:id/complete", protect, completeChallenge);
+
+export default router;

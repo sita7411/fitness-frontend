@@ -1,0 +1,35 @@
+// routes/scheduleRoutes.js
+
+import express from "express";
+import {
+  getMemberSchedule,
+  getAdminSchedule,
+  createScheduleEvent,
+  updateScheduleEvent,
+  deleteScheduleEvent,
+  markEventCompleted,
+  deleteEventsBySource,
+} from "../controllers/scheduleController.js";
+
+import { protect, adminprotect } from "../middleware/auth.js";
+
+const router = express.Router();
+
+router.route("/admin").get(protect, adminprotect, getAdminSchedule);
+
+router.route("/").get(protect, getMemberSchedule);
+
+router.route("/").post(protect, adminprotectcreateScheduleEvent);
+router.route("/:id").put(protect, updateScheduleEvent);
+
+router.route("/:id").delete(protect, deleteScheduleEvent);
+
+router.route("/:id/complete").patch(protect, markEventCompleted);
+
+
+
+router
+  .route("/source/:sourceType/:sourceId")
+  .delete(protect, adminprotect, deleteEventsBySource);
+
+export default router;
