@@ -1,14 +1,14 @@
-// src/pages/ContactUs.js (or wherever your file is)
 
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Mail, Phone, MapPin } from "lucide-react";
+const API_URL = import.meta.env.VITE_API_URL;
 
 const iconMap = {
   Mail: Mail,
   Phone: Phone,
   MapPin: MapPin,
-  Users: () => null,       // fallback if icon not imported
+  Users: () => null,
   Star: () => null,
   HeartPulse: () => null,
 };
@@ -20,7 +20,7 @@ export default function ContactUs() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/settings");
+        const res = await fetch(`${API_URL}/api/settings`);
         if (!res.ok) throw new Error("Failed to load settings");
         const data = await res.json();
         setSettings(data);

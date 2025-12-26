@@ -4,6 +4,7 @@ import { CheckIcon, StarIcon } from "@heroicons/react/24/solid";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
+const API_URL = import.meta.env.VITE_API_URL;
 
 const MembershipPage = () => {
   const navigate = useNavigate();
@@ -13,7 +14,7 @@ const MembershipPage = () => {
   useEffect(() => {
     const fetchPlans = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/memberships", {
+        const res = await axios.get(`${API_URL}/api/memberships`, {
           withCredentials: true,
         });
         setPlans(res.data);
@@ -125,7 +126,7 @@ const MembershipPage = () => {
               >
                 Buy Now
               </button>
-              
+
             </motion.div>
           ))}
 

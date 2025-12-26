@@ -20,6 +20,7 @@ import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import { Play, Pause, RotateCcw } from "lucide-react";
 import "react-toastify/dist/ReactToastify.css";
+const API_URL = import.meta.env.VITE_API_URL;
 
 const THEME = "#e3002a";
 
@@ -91,10 +92,11 @@ function WaterTracker({ value, setCups }) {
   const updateWater = async (increment) => {
     try {
       await axios.post(
-        "http://localhost:5000/api/stats/water",
+        `${API_URL}/api/stats/water`,
         { increment },
         { withCredentials: true }
       );
+
       setCups((prev) => prev + increment);
       toast.success(increment > 0 ? "+1 Glass Added" : "Glass Removed");
     } catch (err) {
@@ -359,7 +361,7 @@ export default function NutritionPage() {
       console.log("Marking meal as complete:", mealIdStr, "Plan:", currentPlan._id, "Day:", selectedDayIndex);
 
       await axios.post(
-        "http://localhost:5000/api/nutrition/mark-meal-complete",
+        `${API_URL}/api/nutrition/mark-meal-complete`,
         {
           mealId: meal._id,
           planId: currentPlan._id,
@@ -368,8 +370,9 @@ export default function NutritionPage() {
         { withCredentials: true }
       );
 
+
       await axios.post(
-        "http://localhost:5000/api/stats/meal",
+        `${API_URL}/api/stats/meal`,
         {
           mealId: meal._id,
           calories: meal.nutrition?.calories || 0,
@@ -380,7 +383,6 @@ export default function NutritionPage() {
         { withCredentials: true }
       );
 
-      // Manual instant update - यही main fix है refresh issue के लिए
       setCompletedMeals((prev) => {
         if (prev.includes(mealIdStr)) return prev;
         const updated = [...prev, mealIdStr];
@@ -402,9 +404,9 @@ export default function NutritionPage() {
         setLoading(true);
 
         const [plansRes, todayStatsRes, weeklyRes] = await Promise.all([
-          axios.get("http://localhost:5000/api/nutrition/my/plans", { withCredentials: true }),
-          axios.get("http://localhost:5000/api/stats/today", { withCredentials: true }),
-          axios.get("http://localhost:5000/api/stats/weekly", { withCredentials: true }),
+          axios.get(`${API_URL}/api/nutrition/my/plans`, { withCredentials: true }),
+          axios.get(`${API_URL}/api/stats/today`, { withCredentials: true }),
+          axios.get(`${API_URL}/api/stats/weekly`, { withCredentials: true }),
         ]);
 
         const userPlans = plansRes.data.plans || [];
@@ -445,7 +447,10 @@ export default function NutritionPage() {
         setProgressLoading(true);
         console.log("Fetching progress for plan:", selectedPlanId, "day:", selectedDayIndex);
 
-        const userRes = await axios.get("http://localhost:5000/api/auth/me", { withCredentials: true });
+        const userRes = await axios.get(
+          `${API_URL}/api/auth/me`,
+          { withCredentials: true }
+        );
 
         console.log("FULL USER FROM /me:", userRes.data.user);
         console.log("NUTRITION PROGRESS FROM SERVER:", userRes.data.user?.nutritionProgress);

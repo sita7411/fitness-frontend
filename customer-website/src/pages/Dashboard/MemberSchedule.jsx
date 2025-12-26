@@ -19,18 +19,19 @@ import { useUserAuth } from "../../context/AuthContext";
 const THEME_COLOR = "#e3002a";
 
 const API = axios.create({
-  baseURL: "http://localhost:5000/api/schedule",
+  baseURL: `${import.meta.env.VITE_API_URL}/api/schedule`,
   withCredentials: true,
 });
 
-const getMemberSchedule = async (month) => (await API.get(`?month=${month}`)).data.events;
-const createEvent = async (data) => (await API.post("/", data)).data.event;
-const updateEvent = async (id, data) => (await API.put(`/${id}`, data)).data.event;
-const deleteEvent = async (id) => (await API.delete(`/${id}`)).data;
-const markCompleteEvent = async (id) => (await API.patch(`/${id}/complete`)).data.event;
+
+export const getMemberSchedule = async (month) => (await API.get(`?month=${month}`)).data.events;
+export const createEvent = async (data) => (await API.post("/", data)).data.event;
+export const updateEvent = async (id, data) => (await API.put(`/${id}`, data)).data.event;
+export const deleteEvent = async (id) => (await API.delete(`/${id}`)).data;
+export const markCompleteEvent = async (id) => (await API.patch(`/${id}/complete`)).data.event;
 
 export default function ProfessionalSchedule() {
-  const { user, loading } = useUserAuth(); // ← current logged in user
+  const { user, loading } = useUserAuth(); 
 
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [events, setEvents] = useState([]);

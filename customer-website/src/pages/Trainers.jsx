@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { motion } from "framer-motion";
 import { Facebook, Instagram, Globe, ChevronLeft, ChevronRight } from "lucide-react";
+const API_URL = import.meta.env.VITE_API_URL;
 
 export default function Trainers() {
   const [trainers, setTrainers] = useState([]);
@@ -13,7 +14,7 @@ export default function Trainers() {
   const fetchTrainers = async (page = 1) => {
     setLoading(true);
     try {
-      const res = await axios.get("http://localhost:5000/api/trainers", {
+      const res = await axios.get(`${API_URL}/api/trainers`, {
         params: { page, limit: trainersPerPage },
       });
       setTrainers(res.data.trainers || []);

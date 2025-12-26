@@ -7,19 +7,20 @@ import {
   Dumbbell, Camera, Edit3, Home
 } from "lucide-react";
 import { useUserAuth } from "../../context/AuthContext";
+
+const API_URL = import.meta.env.VITE_API_URL;
+
 export default function MyProfile() {
   const { logout } = useUserAuth();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
 
-  // -----------------------------
-  // FETCH LOGGED-IN USER DETAILS
-  // -----------------------------
+
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/auth/me", {
+        const res = await axios.get(`${API_URL}/api/auth/me`, {
           withCredentials: true,
         });
 
@@ -113,9 +114,12 @@ export default function MyProfile() {
     }
 
     try {
-      const res = await axios.put("http://localhost:5000/api/auth/me", payload, {
-        withCredentials: true,
-      });
+      const res = await axios.put(
+        `${API_URL}/api/auth/me`,
+        payload,
+        { withCredentials: true }
+      );
+
 
       setUser(res.data.user);
       toast.success("Profile updated successfully!");

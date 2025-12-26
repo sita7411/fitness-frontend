@@ -3,11 +3,12 @@ import { Link, useLocation } from "react-router-dom";
 import { UserCircleIcon, ShoppingCartIcon } from "@heroicons/react/24/solid";
 import { useShop } from "../../context/ShopContext";
 import { useUserAuth } from "../../context/AuthContext";
+const API_URL = import.meta.env.VITE_API_URL;
 
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
-  const [logoUrl, setLogoUrl] = useState("/logo.png"); // default fallback
+  const [logoUrl, setLogoUrl] = useState("/logo.png"); 
   const [loadingLogo, setLoadingLogo] = useState(true);
 
   const location = useLocation();
@@ -20,7 +21,7 @@ const Navbar = () => {
   useEffect(() => {
     const fetchLogo = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/settings", {
+        const res = await fetch(`${API_URL}/api/settings`, {
           credentials: "include", // Sends cookies automatically
         });
         if (!res.ok) throw new Error("Failed to fetch settings");
@@ -40,7 +41,6 @@ const Navbar = () => {
     fetchLogo();
   }, []);
 
-  // Close dropdown when clicking outside (existing code)
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (accountRef.current && !accountRef.current.contains(event.target)) {

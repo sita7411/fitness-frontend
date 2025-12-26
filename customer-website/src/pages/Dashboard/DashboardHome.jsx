@@ -74,7 +74,7 @@ export default function DashboardHome() {
           axios.get("/api/stats/today", { withCredentials: true }),
           axios.get("/api/stats/latest-session", { withCredentials: true }),
           axios.get("/api/stats/today-schedule", { withCredentials: true }),
-          axios.get("http://localhost:5000/api/notifications", { withCredentials: true }), // ← Notifications API
+          axios.get(`${import.meta.env.VITE_API_URL}/api/notifications`, { withCredentials: true }), // ← Notifications API
         ]);
 
         // Weekly Data

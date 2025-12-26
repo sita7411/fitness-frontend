@@ -17,7 +17,7 @@ import { useUserAuth } from "../context/AuthContext";
 
 export default function ProfileDashboard() {
   const accent = "#E3002A";
-  const backendURL = "http://localhost:5000";
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const { user: authUser } = useUserAuth();
   const [activeTab, setActiveTab] = useState("profile");
@@ -96,7 +96,7 @@ export default function ProfileDashboard() {
       if (avatarFile) formData.append("avatar", avatarFile);
 
       // FIXED URL HERE
-      const res = await axios.put(`${backendURL}/api/auth/me`, formData, {
+      const res = await axios.put(`${API_URL}/api/auth/me`, formData, {
         withCredentials: true,
         headers: {
           "Content-Type": "multipart/form-data",
@@ -127,7 +127,7 @@ export default function ProfileDashboard() {
     try {
       setIsLoading(true);
       const res = await axios.put(
-        `${backendURL}/api/auth/password`, 
+        `${backendURL}/api/auth/password`,
         { currentPassword: passwordCurrent, newPassword: passwordNew },
         { withCredentials: true }
       );
@@ -145,7 +145,7 @@ export default function ProfileDashboard() {
   const handleSavePreferences = async () => {
     try {
       setIsLoading(true);
-      const res = await axios.put(`${backendURL}/api/auth/preferences`, preferences, {
+      const res = await axios.put(`${API_URL}/api/auth/preferences`, preferences, {
         withCredentials: true,
       });
       toast.success(res.data?.message || "Preferences saved successfully!");

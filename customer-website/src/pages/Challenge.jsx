@@ -20,7 +20,9 @@ const ChallengesPage = () => {
     const fetchChallenges = async () => {
       try {
         setLoading(true);
-        const { data } = await axios.get("http://localhost:5000/api/challenges");
+        const { data } = await axios.get(
+          `${import.meta.env.VITE_API_URL}/api/challenges`
+        );
         setChallengesData(
           data.map((ch) => ({
             id: ch._id,
@@ -139,11 +141,10 @@ const ChallengesPage = () => {
               setFilter(f);
               setCurrentPage(1);
             }}
-            className={`px-6 py-2.5 rounded-full font-semibold transition-all ${
-              filter === f
+            className={`px-6 py-2.5 rounded-full font-semibold transition-all ${filter === f
                 ? "bg-[#E3002A] text-white shadow-md"
                 : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-            }`}
+              }`}
           >
             {f.charAt(0).toUpperCase() + f.slice(1)}
           </button>
@@ -172,9 +173,8 @@ const ChallengesPage = () => {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent opacity-70" />
               <span
-                className={`absolute top-4 left-4 text-white text-sm font-semibold px-4 py-1.5 rounded-full shadow-md ${
-                  ch.free ? "bg-blue-600" : "bg-[#E3002A]"
-                }`}
+                className={`absolute top-4 left-4 text-white text-sm font-semibold px-4 py-1.5 rounded-full shadow-md ${ch.free ? "bg-blue-600" : "bg-[#E3002A]"
+                  }`}
               >
                 {ch.free ? "Free" : `₹${ch.price}`}
               </span>
@@ -216,11 +216,10 @@ const ChallengesPage = () => {
           <button
             onClick={prevPage}
             disabled={currentPage === 1}
-            className={`p-2 rounded-full border flex items-center justify-center ${
-              currentPage === 1
+            className={`p-2 rounded-full border flex items-center justify-center ${currentPage === 1
                 ? "text-gray-400 border-gray-300 cursor-not-allowed"
                 : "text-red-600 border-red-600 hover:bg-red-600 hover:text-white"
-            }`}
+              }`}
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
@@ -229,11 +228,10 @@ const ChallengesPage = () => {
             <button
               key={i + 1}
               onClick={() => setCurrentPage(i + 1)}
-              className={`w-10 h-10 rounded-full border flex items-center justify-center font-semibold ${
-                currentPage === i + 1
+              className={`w-10 h-10 rounded-full border flex items-center justify-center font-semibold ${currentPage === i + 1
                   ? "bg-red-600 text-white border-red-600"
                   : "bg-white text-black border-gray-300 hover:bg-red-600 hover:text-white"
-              }`}
+                }`}
             >
               {i + 1}
             </button>
@@ -242,11 +240,10 @@ const ChallengesPage = () => {
           <button
             onClick={nextPage}
             disabled={currentPage === totalPages}
-            className={`p-2 rounded-full border flex items-center justify-center ${
-              currentPage === totalPages
+            className={`p-2 rounded-full border flex items-center justify-center ${currentPage === totalPages
                 ? "text-gray-400 border-gray-300 cursor-not-allowed"
                 : "text-red-600 border-red-600 hover:bg-red-600 hover:text-white"
-            }`}
+              }`}
           >
             <ChevronRight className="w-5 h-5" />
           </button>
@@ -291,9 +288,8 @@ const ChallengesPage = () => {
 
             <div className="mb-6">
               <span
-                className={`inline-block px-5 py-2 rounded-full font-semibold text-white text-lg ${
-                  selectedChallenge.free ? "bg-blue-600" : "bg-[#E3002A]"
-                }`}
+                className={`inline-block px-5 py-2 rounded-full font-semibold text-white text-lg ${selectedChallenge.free ? "bg-blue-600" : "bg-[#E3002A]"
+                  }`}
               >
                 {selectedChallenge.free ? "Free" : `₹${selectedChallenge.price}`}
               </span>

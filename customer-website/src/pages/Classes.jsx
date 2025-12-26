@@ -14,6 +14,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+const API_URL = import.meta.env.VITE_API_URL;
 
 const Classes = () => {
   const [classes, setClasses] = useState([]);
@@ -26,7 +27,7 @@ const Classes = () => {
   const fetchClasses = async () => {
     setLoading(true);
     try {
-      const res = await axios.get("http://localhost:5000/api/classes/active");
+      const res = await axios.get(`${API_URL}/api/classes/active`);
       const filteredClasses = res.data.filter(
         (cls) => cls.status === "Active"
       );

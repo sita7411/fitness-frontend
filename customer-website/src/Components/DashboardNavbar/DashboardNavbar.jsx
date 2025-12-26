@@ -15,6 +15,7 @@ import {
 import { useUserAuth } from "../../context/AuthContext";
 import axios from "axios";
 import { getSocket } from "../../utils/socket";
+const API_URL = import.meta.env.VITE_API_URL;
 
 const THEME = "#e3002a";
 
@@ -55,7 +56,7 @@ export default function Navbar() {
 
     const fetchNotifications = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/notifications", {
+        const response = await axios.get(`${API_URL}/api/notifications`, {
           withCredentials: true,
         });
         if (response.data.success && isMounted) {
@@ -104,7 +105,7 @@ export default function Navbar() {
   const markAllRead = async () => {
     try {
       await axios.put(
-        "http://localhost:5000/api/notifications/read-all",
+       `${API_URL}/api/notifications/read-all`,
         {},
         { withCredentials: true }
       );
@@ -116,7 +117,7 @@ export default function Navbar() {
 
   const deleteNotification = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/notifications/${id}`, {
+      await axios.delete(`${API_URL}/api/notifications/${id}`, {
         withCredentials: true,
       });
       setNotifications((prev) => prev.filter((n) => n._id !== id));

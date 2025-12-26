@@ -13,6 +13,7 @@ import {
   ShoppingCart,
   Calendar,
 } from "lucide-react";
+const API_URL = import.meta.env.VITE_API_URL;
 
 const iconMap = {
   workout: Dumbbell,
@@ -37,11 +38,11 @@ export default function FitnessNotifications({ currentUserId }) {
     try {
       console.log("🔄 Fetching notifications for user:", currentUserId); // Debug
       const { data } = await axios.get(
-        "http://localhost:5000/api/notifications",
+        `${API_URL}/api/notifications`,
         { withCredentials: true }
       );
 
-      console.log("📥 API Response:", data); // ← ये देखो console में
+      console.log("📥 API Response:", data);
 
       if (data.success) {
         setNotifications(data.notifications || []);
@@ -114,10 +115,11 @@ export default function FitnessNotifications({ currentUserId }) {
   const markAllRead = async () => {
     try {
       await axios.put(
-        "http://localhost:5000/api/notifications/read-all",
+        `${API_URL}/api/notifications/read-all`,
         {},
         { withCredentials: true }
       );
+
       setNotifications((prev) =>
         prev.map((n) => ({ ...n, isRead: true }))
       );
@@ -129,9 +131,11 @@ export default function FitnessNotifications({ currentUserId }) {
 
   const deleteNotification = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/notifications/${id}`, {
-        withCredentials: true,
-      });
+      await axios.delete(
+        `${API_URL}/api/notifications/${id}`,
+        { withCredentials: true }
+      );
+
       setNotifications((prev) => prev.filter((n) => n._id !== id));
       console.log("✅ Deleted notification:", id);
     } catch (err) {

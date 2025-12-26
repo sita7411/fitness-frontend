@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import axios from "axios";
+const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
 
 export default function MemberLeaderboard({ currentUserId }) {
     const THEME = "#e3002a";
@@ -27,7 +28,8 @@ export default function MemberLeaderboard({ currentUserId }) {
                 setLoading(true);
                 setError(null);
 
-                const res = await axios.get("http://localhost:5000/api/leaderboard?t=" + Date.now(), {
+
+                const res = await axios.get(`${API_BASE}/leaderboard?t=${Date.now()}`, {
                     withCredentials: true,
                 });
                 const leaderboard = res.data;
@@ -44,7 +46,6 @@ export default function MemberLeaderboard({ currentUserId }) {
                 console.log("Full leaderboard data from backend:", ranked);
                 console.log("currentUserId from props:", currentUserId, typeof currentUserId);
                 console.log("All user IDs:", ranked.map(u => ({ name: u.name, id: u.id, _id: u._id, type: typeof u.id })));
-                // ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
             } catch (err) {
                 console.error("Leaderboard fetch error:", err);
                 setError("Failed to load leaderboard. Please try again.");

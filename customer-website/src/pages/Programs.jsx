@@ -16,6 +16,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+const API_URL = import.meta.env.VITE_API_URL;
 
 const Programs = () => {
   const [programs, setPrograms] = useState([]);
@@ -35,7 +36,7 @@ const Programs = () => {
   useEffect(() => {
     const fetchPrograms = async () => {
       try {
-        const { data } = await axios.get("http://localhost:5000/api/programs");
+        const { data } = await axios.get(`${API_URL}/api/programs`);
 
         const safeData = data.map((p) => ({
           ...p,
@@ -66,7 +67,7 @@ const Programs = () => {
     if (!program) return;
 
     try {
-      const res = await axios.patch(`http://localhost:5000/api/programs/${programId}/status`, {
+      const res = await axios.patch(`${API_URL}/api/programs/${programId}/status`, {
         status: program.status === "Active" ? "Inactive" : "Active",
       });
 

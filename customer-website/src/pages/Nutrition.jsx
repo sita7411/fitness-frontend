@@ -5,12 +5,13 @@ import "react-toastify/dist/ReactToastify.css";
 import { User, Clock, ChevronLeft, ChevronRight } from "lucide-react";
 import { useShop } from "../context/ShopContext";
 import axios from "axios";
+const API_URL = import.meta.env.VITE_API_URL;
 
 // Member program (fetch from API or context)
 const memberProgram = {
   id: 1,
   name: "Beginner Fitness Program",
-  nutritionPlans: [], // Will be populated from API
+  nutritionPlans: [],
 };
 
 const Nutrition = () => {
@@ -33,7 +34,7 @@ const Nutrition = () => {
     try {
       setLoading(true);
       //  GET ALL PLANS
-      const response = await axios.get("http://localhost:5000/api/nutrition/");
+      const response = await axios.get(`${API_URL}/api/nutrition/`);
       setNutritionTips(response.data);
     } catch (error) {
       console.error("Error fetching nutrition plans:", error);

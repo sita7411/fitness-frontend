@@ -18,6 +18,8 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { motion } from "framer-motion";
 import axios from "axios";
+const API_URL = import.meta.env.VITE_API_URL;
+
 const ProgramDetails = () => {
     const { id } = useParams();
     const [program, setProgram] = useState(null);
@@ -30,7 +32,7 @@ const ProgramDetails = () => {
         const fetchProgram = async () => {
             try {
                 // Fetch single program
-                const { data } = await axios.get(`http://localhost:5000/api/programs/${id}`);
+                const { data } = await axios.get(`${API_URL}/api/programs/${id}`);
 
                 const priceNumber = Number(data.price || 0);
                 const safeProgram = {
@@ -57,7 +59,7 @@ const ProgramDetails = () => {
                 setProgram(safeProgram);
 
                 // Fetch all programs to find related ones
-                const { data: all } = await axios.get("http://localhost:5000/api/programs");
+                const { data: all } = await axios.get(`${API_URL}/api/programs`);
                 const relatedPrograms = all
                     .filter((p) => p._id.toString() !== id)
                     .sort(() => 0.5 - Math.random())

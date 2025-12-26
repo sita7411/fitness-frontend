@@ -6,6 +6,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import axios from "axios";
 import "react-toastify/dist/ReactToastify.css";
+const API_URL = import.meta.env.VITE_API_URL;
 
 /* ------------------------------
    CustomDropdown (unchanged)
@@ -276,9 +277,10 @@ const Checkout = () => {
 
     try {
       setIsProcessing(true);
-      await axios.post("http://localhost:5000/api/otp/send", {
+      await axios.post(`${API_URL}/api/otp/send`, {
         email: userDetails.email,
       });
+
 
       toast.success("OTP sent to your email!");
       setOtpSent(true);
@@ -431,7 +433,7 @@ const Checkout = () => {
         return;
       }
       // SEND TO BACKEND
-      await axios.post("http://localhost:5000/api/otp/verify", {
+      await axios.post(`${API_URL}/api/otp/verify`, {
         email: userDetails.email,
         otp: otpValue,
         userDetails,
@@ -441,7 +443,7 @@ const Checkout = () => {
         challenges: challengesForBackend,
         nutrition: nutritionForBackend,
         total: safeTotal,
-         membershipId: membershipId,
+        membershipId: membershipId,
       });
 
       toast.success("Purchase completed successfully!");
@@ -464,7 +466,9 @@ const Checkout = () => {
     if (resendCooldown > 0) return;
     try {
       setIsProcessing(true);
-      await axios.post("http://localhost:5000/api/otp/send", { email: userDetails.email });
+      await axios.post(`${API_URL}/api/otp/send`, {
+        email: userDetails.email,
+      });
       toast.success("OTP resent to your email!");
       setResendCooldown(45);
     } catch (err) {
