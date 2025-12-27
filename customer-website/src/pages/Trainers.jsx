@@ -10,12 +10,17 @@ export default function Trainers() {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const trainersPerPage = 6;
-
+  const token = localStorage.getItem("user_token");
   const fetchTrainers = async (page = 1) => {
     setLoading(true);
     try {
+      const headers = {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      };
+
       const res = await axios.get(`${API_URL}/api/trainers`, {
         params: { page, limit: trainersPerPage },
+        headers,  
       });
       setTrainers(res.data.trainers || []);
       setTotalPages(Math.ceil((res.data.total || 0) / trainersPerPage));
@@ -149,11 +154,10 @@ export default function Trainers() {
               <button
                 onClick={prevPage}
                 disabled={currentPage === 1}
-                className={`p-3 rounded-full border-2 transition-all ${
-                  currentPage === 1
+                className={`p-3 rounded-full border-2 transition-all ${currentPage === 1
                     ? "border-gray-300 text-gray-400 cursor-not-allowed"
                     : "border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
-                }`}
+                  }`}
               >
                 <ChevronLeft size={24} />
               </button>
@@ -162,11 +166,10 @@ export default function Trainers() {
                 <button
                   key={i + 1}
                   onClick={() => setCurrentPage(i + 1)}
-                  className={`w-12 h-12 rounded-full font-bold text-lg transition-all ${
-                    currentPage === i + 1
+                  className={`w-12 h-12 rounded-full font-bold text-lg transition-all ${currentPage === i + 1
                       ? "bg-red-600 text-white shadow-lg"
                       : "bg-gray-100 hover:bg-red-100 text-gray-800"
-                  }`}
+                    }`}
                 >
                   {i + 1}
                 </button>
@@ -175,11 +178,10 @@ export default function Trainers() {
               <button
                 onClick={nextPage}
                 disabled={currentPage === totalPages}
-                className={`p-3 rounded-full border-2 transition-all ${
-                  currentPage === totalPages
+                className={`p-3 rounded-full border-2 transition-all ${currentPage === totalPages
                     ? "border-gray-300 text-gray-400 cursor-not-allowed"
                     : "border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
-                }`}
+                  }`}
               >
                 <ChevronRight size={24} />
               </button>
