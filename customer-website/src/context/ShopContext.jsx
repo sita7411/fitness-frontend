@@ -4,11 +4,16 @@ import axios from "axios";
 import { toast } from "react-toastify";
 
 const api = axios.create({
-    baseURL: `${import.meta.env.VITE_API_URL}/api/auth`,
+    baseURL: `${import.meta.env.VITE_API_URL}/api/auth`,  // ← वैसा ही रखा (तुम्हारी मर्जी)
     withCredentials: false,
 });
 
+// 🔥 यही एक नया change है — Bearer token automatically हर request में लग जाएगा
 api.interceptors.request.use((config) => {
+    const token = localStorage.getItem("user_token");
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
     console.log(`API ${config.method.toUpperCase()} → ${config.url}`);
     return config;
 });
@@ -23,7 +28,7 @@ export const ShopProvider = ({ children }) => {
     useEffect(() => {
         const fetchCart = async () => {
             try {
-                const res = await api.get("/cart");
+                const res = await api.get("/cart"); // ← अब token header लगेगा
                 setCartItems(res.data.items || []);
             } catch (err) {
                 console.error("Failed to load cart:", err);
@@ -53,10 +58,10 @@ export const ShopProvider = ({ children }) => {
     }, [cartItems]);
 
     const addToCart = async (item) => {
-        // SMART CART TYPE DETECTION (Programs, Classes, Challenges, Nutrition — SAB COVERED)
-        let cartType = "program"; // default fallback
+        // तुम्हारा पूरा smart detection logic वैसा ही...
 
-        // 1. Explicit type field (most reliable)
+        let cartType = "program";
+
         if (item.type) {
             const type = item.type.toString().toLowerCase().trim();
             if (type === "challenge") cartType = "challenge";
@@ -64,7 +69,6 @@ export const ShopProvider = ({ children }) => {
             else if (type === "nutrition" || type === "nutritionplan" || type === "mealplan") cartType = "nutrition";
             else if (type === "program") cartType = "program";
         }
-        // 2. Category field
         else if (item.category) {
             const cat = item.category.toString().toLowerCase().trim();
             if (cat === "challenge") cartType = "challenge";
@@ -80,7 +84,6 @@ export const ShopProvider = ({ children }) => {
             else if (text.includes("class") || text.includes("session")) cartType = "class";
         }
 
-        // ID extraction — super safe
         const itemId = item._id?.toString() ||
             item.id?.toString() ||
             item.classId?.toString() ||
@@ -109,7 +112,7 @@ export const ShopProvider = ({ children }) => {
 
         setIsSyncing(true);
         try {
-            const res = await api.post("/cart/add", { item: cartItem });
+            const res = await api.post("/cart/add", { item: cartItem }); // ← token लगेगा
             setCartItems(res.data.items || []);
             toast.success(`${cartItem.title} added to cart!`);
         } catch (err) {
@@ -119,8 +122,8 @@ export const ShopProvider = ({ children }) => {
             setIsSyncing(false);
         }
     };
-    
-    // Quantity Controls
+
+    // बाकी सारे functions बिल्कुल वैसा ही — कोई change नहीं
     const increaseQuantity = async (itemId, itemType = "program") => {
         setIsSyncing(true);
         try {
