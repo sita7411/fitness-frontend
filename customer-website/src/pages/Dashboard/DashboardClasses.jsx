@@ -131,7 +131,7 @@ export default function MyClasses() {
     const loadClasses = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`${API_BASE}/classes/user`, { withCredentials: true });
+        const res = await axios.get(`${API_BASE}/classes/user`);
         const transformed = (res.data.classes || []).map(cls => ({
           id: cls._id,
           title: cls.title || 'Untitled Class',
@@ -176,7 +176,7 @@ export default function MyClasses() {
 
     const loadProgress = async (classId) => {
       try {
-        const res = await axios.get(`${API_BASE}/classes/${classId}/progress`, { withCredentials: true });
+        const res = await axios.get(`${API_BASE}/classes/${classId}/progress`);
         setProgressData(res.data.progress || { completedExercises: [], streak: 0, achievements: [] });
       } catch (err) {
         console.error('Failed to load progress', err);
@@ -252,7 +252,7 @@ export default function MyClasses() {
     axios.post(`${API_BASE}/classes/progress`, {
       classId: selectedProgramId,
       completedExerciseId: ex.id,
-    }, { withCredentials: true })
+    })
       .then(res => {
         setProgressData(res.data.progress);
       })
@@ -303,7 +303,7 @@ export default function MyClasses() {
     axios.post(`${API_BASE}/classes/progress`, {
       classId: selectedProgramId,
       completedExercises: filtered,
-    }, { withCredentials: true });
+    });
 
     setCurrentIndex(0);
   }
@@ -314,7 +314,7 @@ export default function MyClasses() {
     axios.post(`${API_BASE}/classes/progress`, {
       classId: selectedProgramId,
       completedExercises: [],
-    }, { withCredentials: true });
+    });
 
     setSelectedDayIndex(0);
     setCurrentIndex(0);
@@ -415,7 +415,7 @@ export default function MyClasses() {
                   setFilter('All');
 
                   try {
-                    const res = await axios.get(`${API_BASE}/classes/${p.id}/progress`, { withCredentials: true });
+                    const res = await axios.get(`${API_BASE}/classes/${p.id}/progress`);
                     setProgressData(res.data.progress || { completedExercises: [], streak: 0, achievements: [] });
                   } catch (err) {
                     setProgressData({ completedExercises: [], streak: 0, achievements: [] });
