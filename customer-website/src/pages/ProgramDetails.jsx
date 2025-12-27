@@ -31,9 +31,11 @@ const ProgramDetails = () => {
     useEffect(() => {
         const fetchProgram = async () => {
             try {
-                // Fetch single program
-                const { data } = await axios.get(`${API_URL}/api/programs/${id}`);
+                const token = localStorage.getItem("user_token");
+                const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
+                // Single program
+                const { data } = await axios.get(`${API_URL}/api/programs/${id}`, { headers });
                 const priceNumber = Number(data.price || 0);
                 const safeProgram = {
                     ...data,
@@ -59,8 +61,8 @@ const ProgramDetails = () => {
                 setProgram(safeProgram);
 
                 // Fetch all programs to find related ones
-                const { data: all } = await axios.get(`${API_URL}/api/programs`);
-                const relatedPrograms = all
+                const { data: all } = await axios.get(`${API_URL}/api/programs`, { headers });
+                 const relatedPrograms = all
                     .filter((p) => p._id.toString() !== id)
                     .sort(() => 0.5 - Math.random())
                     .slice(0, 4)
@@ -93,7 +95,7 @@ const ProgramDetails = () => {
     const handleAddToCart = (program) => {
         const cartItem = {
             id: program.id,
-             type: "program",
+            type: "program",
             title: program.title || "Untitled Program",
             desc: program.overview?.slice(0, 150) + "..." || "No description",
             image: program.banner || program.thumbnail || "/placeholder.jpg",
