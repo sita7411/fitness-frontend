@@ -147,7 +147,10 @@ export default function MyWorkouts() {
   useEffect(() => {
     const fetchTodayStats = async () => {
       try {
-        const res = await axios.get(`${API_BASE}/stats/today`, { withCredentials: false });
+        const res = await axios.get(`${API_BASE}/stats/today`, {
+          withCredentials: false,
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
         setBackendWorkoutMinutes(res.data.workoutMinutes || 0);
       } catch (err) {
         console.log("Could not fetch workout minutes");
