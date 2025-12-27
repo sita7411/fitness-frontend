@@ -23,6 +23,7 @@ const Nutrition = () => {
   const [filter, setFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
+  const token = localStorage.getItem("user_token");
 
   //  API CALLS
   useEffect(() => {
@@ -34,7 +35,10 @@ const Nutrition = () => {
     try {
       setLoading(true);
       //  GET ALL PLANS
-      const response = await axios.get(`${API_URL}/api/nutrition/`);
+      const response = await axios.get(`${API_URL}/api/nutrition/`, {
+          withCredentials: false,
+          headers: { Authorization: `Bearer ${token}` }
+      });
       setNutritionTips(response.data);
     } catch (error) {
       console.error("Error fetching nutrition plans:", error);
@@ -46,7 +50,10 @@ const Nutrition = () => {
 
   const fetchMemberPlans = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/api/nutrition/");
+      const response = await axios.get("http://localhost:5000/api/nutrition/", {
+          withCredentials: false,
+          headers: { Authorization: `Bearer ${token}` }
+      });
 
       //  REAL: Sirf backend se isIncluded: true wale plans
       const memberPlans = response.data.filter(plan => plan.isIncluded === true);
