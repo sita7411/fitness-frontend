@@ -20,17 +20,16 @@ export default function MemberLeaderboard({ currentUserId }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [q, setQ] = useState("");
-
-    // Fetch leaderboard data from backend
     useEffect(() => {
         const fetchData = async () => {
             try {
                 setLoading(true);
                 setError(null);
-
+                const token = localStorage.getItem("user_token");
 
                 const res = await axios.get(`${API_BASE}/leaderboard?t=${Date.now()}`, {
                     withCredentials: false,
+                    headers: token ? { Authorization: `Bearer ${token}` } : {}
                 });
                 const leaderboard = res.data;
 
@@ -42,7 +41,6 @@ export default function MemberLeaderboard({ currentUserId }) {
 
                 setData(ranked);
 
-                // ← YE TEEN LINES YAHAN DAALO (setData ke immediately baad)
                 console.log("Full leaderboard data from backend:", ranked);
                 console.log("currentUserId from props:", currentUserId, typeof currentUserId);
                 console.log("All user IDs:", ranked.map(u => ({ name: u.name, id: u.id, _id: u._id, type: typeof u.id })));
@@ -68,7 +66,6 @@ export default function MemberLeaderboard({ currentUserId }) {
             );
         }
 
-        // Client-side sort by workouts → challenges (same as backend)
         const sorted = [...list].sort((a, b) => {
             if (b.workouts !== a.workouts) return b.workouts - a.workouts;
             if (b.challenges !== a.challenges) return b.challenges - a.challenges;
