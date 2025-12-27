@@ -194,6 +194,7 @@ const Checkout = () => {
   const navigate = useNavigate();
   const { items = [], total: rawTotal = 0, membershipId = null, isMembershipPurchase = false } = location.state || {};
   const total = Number(rawTotal) || 0;
+  const token = localStorage.getItem("user_token");
   const [userDetails, setUserDetails] = useState({
     name: "",
     email: "",
@@ -277,9 +278,16 @@ const Checkout = () => {
 
     try {
       setIsProcessing(true);
-      await axios.post(`${API_URL}/api/otp/send`, {
-        email: userDetails.email,
-      });
+      const headers = {
+        "Content-Type": "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+      };
+
+      await axios.post(
+        `${API_URL}/api/otp/send`,
+        { email: userDetails.email },
+        { headers }
+      );
 
 
       toast.success("OTP sent to your email!");
@@ -466,9 +474,16 @@ const Checkout = () => {
     if (resendCooldown > 0) return;
     try {
       setIsProcessing(true);
-      await axios.post(`${API_URL}/api/otp/send`, {
-        email: userDetails.email,
-      });
+      const headers = {
+        "Content-Type": "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+      };
+
+      await axios.post(
+        `${API_URL}/api/otp/send`,
+        { email: userDetails.email },
+        { headers }
+      );
       toast.success("OTP resent to your email!");
       setResendCooldown(45);
     } catch (err) {
