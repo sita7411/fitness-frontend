@@ -20,7 +20,7 @@ const THEME_COLOR = "#e3002a";
 
 const API = axios.create({
   baseURL: `${import.meta.env.VITE_API_URL}/api/schedule`,
-  withCredentials: true,
+  withCredentials: false,
 });
 
 
