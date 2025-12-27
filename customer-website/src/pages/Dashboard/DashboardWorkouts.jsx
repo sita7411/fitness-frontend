@@ -104,7 +104,7 @@ export default function MyWorkouts() {
     ten_ex: { title: '10 Exercises', desc: 'Completed 10 exercises' },
     seven_day_streak: { title: '7 Day Streak', desc: 'Worked out 7 days in a row' }
   };
-
+  const token = localStorage.getItem("user_token");
   const [achievements, setAchievements] = useState([]);
   const timerRef = useRef(null);
   const exerciseListRef = useRef(null);
@@ -147,7 +147,7 @@ export default function MyWorkouts() {
   useEffect(() => {
     const fetchTodayStats = async () => {
       try {
-        const res = await axios.get(`${API_BASE}/stats/today`, { withCredentials: true });
+        const res = await axios.get(`${API_BASE}/stats/today`, { withCredentials: false });
         setBackendWorkoutMinutes(res.data.workoutMinutes || 0);
       } catch (err) {
         console.log("Could not fetch workout minutes");
@@ -161,7 +161,10 @@ export default function MyWorkouts() {
     const loadPrograms = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`${API_BASE}/programs/user`, { withCredentials: true });
+        const res = await axios.get(`${API_BASE}/programs/user`, {
+          withCredentials: false,
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
         const transformed = res.data.programs.map((p) => ({
           id: p.id || p._id,
           title: p.title,
@@ -205,7 +208,10 @@ export default function MyWorkouts() {
   useEffect(() => {
     const loadAchievements = async () => {
       try {
-        const res = await axios.get(`${API_BASE}/programs/achievements`, { withCredentials: true });
+        const res = await axios.get(`${API_BASE}/programs/achievements`, {
+          withCredentials: false,
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
         setAchievements(res.data.unlocked || []);
       } catch (err) {
         console.error("Failed to load achievements:", err);
@@ -221,10 +227,18 @@ export default function MyWorkouts() {
     const loadData = async () => {
       try {
         const [progressRes, streakRes, weeklyRes] = await Promise.all([
-          axios.get(`${API_BASE}/programs/${selectedProgramId}/progress`, { withCredentials: true }),
-          axios.get(`${API_BASE}/programs/${selectedProgramId}/streak`, { withCredentials: true }),
-          axios.get(`${API_BASE}/stats/weekly`, { withCredentials: true }).catch(() => ({ data: { last7Days: [] } }))
-        ]);
+          axios.get(`${API_BASE}/programs/${selectedProgramId}/progress`, {
+            withCredentials: false,
+            headers: token ? { Authorization: `Bearer ${token}` } : {}
+          }),
+          axios.get(`${API_BASE}/programs/${selectedProgramId}/streak`, {
+            withCredentials: false,
+            headers: token ? { Authorization: `Bearer ${token}` } : {}
+          }),
+          axios.get(`${API_BASE}/stats/weekly`, {
+            withCredentials: false,
+            headers: token ? { Authorization: `Bearer ${token}` } : {}
+          }).catch(() => ({ data: { last7Days: [] } }))]);
 
         setCompletedExercises(progressRes.data.completedExercises || []);
         setStreak(streakRes.data.streak || 0);
@@ -284,7 +298,10 @@ export default function MyWorkouts() {
       const res = await axios.post(
         `${API_BASE}/programs/${currentProgram.id}/complete-exercise`,
         { day: currentDay.day, exerciseId: ex.id },
-        { withCredentials: true }
+        {
+          withCredentials: false,
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        }
       );
 
       if (res.data.success && !res.data.alreadyCompleted) {
@@ -293,8 +310,10 @@ export default function MyWorkouts() {
         // Add estimated minutes for this exercise
         let timeSpentSeconds = ex.type === 'time' ? ex.time : (ex.reps || 12) * (ex.sets || 3) * 3;
         const minutes = Math.round(timeSpentSeconds / 60);
-        await axios.post(`${API_BASE}/stats/workout-minutes`, { minutes }, { withCredentials: true })
-          .then(r => setBackendWorkoutMinutes(r.data.workoutMinutes || 0))
+        await axios.post(`${API_BASE}/stats/workout-minutes`, { minutes }, {
+          withCredentials: false,
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        }).then(r => setBackendWorkoutMinutes(r.data.workoutMinutes || 0))
           .catch(() => { });
 
         // Check if this completes the entire day
@@ -324,8 +343,10 @@ export default function MyWorkouts() {
                 heartRate: null,
                 weight: null,
               },
-              { withCredentials: true }
-            );
+              {
+                withCredentials: false,
+                headers: token ? { Authorization: `Bearer ${token}` } : {}
+              });
 
             // Update streak from backend response
             if (dayCompleteRes.data.streak !== undefined) {
@@ -391,7 +412,7 @@ export default function MyWorkouts() {
       await axios.post(
         `${API_BASE}/programs/${currentProgram.id}/reset-day`,
         { day: currentDay.day },
-        { withCredentials: true }
+        { withCredentials: false }
       );
       setCompletedExercises(prev => prev.filter(id => !currentDay.exercises.map(e => e.id).includes(id)));
       setCurrentIndex(0);
@@ -409,7 +430,7 @@ export default function MyWorkouts() {
       await axios.post(
         `${API_BASE}/programs/${currentProgram.id}/reset-program`,
         {},
-        { withCredentials: true }
+        { withCredentials: false }
       );
       setCompletedExercises([]);
       setSelectedDayIndex(0);
@@ -921,8 +942,10 @@ export default function MyWorkouts() {
                           heartRate: hr,
                           weight: wt,
                         },
-                        { withCredentials: true }
-                      );
+                        {
+                          withCredentials: false,
+                          headers: token ? { Authorization: `Bearer ${token}` } : {}
+                        });
 
                       if (response.data.streak !== undefined) {
                         setStreak(response.data.streak);
