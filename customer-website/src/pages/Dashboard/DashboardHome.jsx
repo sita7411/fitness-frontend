@@ -70,11 +70,11 @@ export default function DashboardHome() {
     const fetchAll = async () => {
       try {
         const [weeklyRes, todayRes, sessionRes, scheduleRes, notificationsRes] = await Promise.all([
-          axios.get("/api/stats/weekly", { withCredentials: true }),
-          axios.get("/api/stats/today", { withCredentials: true }),
-          axios.get("/api/stats/latest-session", { withCredentials: true }),
-          axios.get("/api/stats/today-schedule", { withCredentials: true }),
-          axios.get(`${import.meta.env.VITE_API_URL}/api/notifications`, { withCredentials: true }), // ← Notifications API
+          axios.get("/api/stats/weekly"),
+          axios.get("/api/stats/today"),
+          axios.get("/api/stats/latest-session"),
+          axios.get("/api/stats/today-schedule"),
+          axios.get(`${import.meta.env.VITE_API_URL}/api/notifications`), 
         ]);
 
         // Weekly Data
