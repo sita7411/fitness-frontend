@@ -23,6 +23,13 @@ const API = axios.create({
   withCredentials: false,
 });
 
+API.interceptors.request.use((config) => {
+  const token = localStorage.getItem("user_token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
 export const getMemberSchedule = async (month) => (await API.get(`?month=${month}`)).data.events;
 export const createEvent = async (data) => (await API.post("/", data)).data.event;
