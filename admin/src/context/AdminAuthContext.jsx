@@ -19,7 +19,7 @@ export const AdminAuthProvider = ({ children }) => {
   const checkAuth = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/admin/me");
+      const res = await api.get("/api/admin/me");
 
       if (res.data.loggedIn && res.data.user?.role === "admin") {
         setAdmin(res.data.user);
@@ -39,7 +39,7 @@ export const AdminAuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       setLoading(true);
-      const res = await api.post("/admin/login", { email, password });
+      const res = await api.post("/api/admin/login", { email, password });
 
       if (res.data.loggedIn && res.data.user?.role === "admin") {
         setAdmin(res.data.user);
@@ -61,7 +61,7 @@ export const AdminAuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await api.post("/admin/logout");
+      await api.post("/api/admin/logout");
     } catch (err) {
       console.error("Admin logout API error:", err);
     } finally {
