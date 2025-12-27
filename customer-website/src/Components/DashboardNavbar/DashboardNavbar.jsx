@@ -36,7 +36,7 @@ export default function Navbar() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const dropdownRef = useRef(null);
-
+  const token = localStorage.getItem("user_token");
   // Click outside to close dropdown
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -49,15 +49,18 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    if (loading || !isLoggedIn || !authUser?.id) return;
-
+    if (loading || !isLoggedIn || !authUser?.id || !token) return;
     let isMounted = true;
     const socket = getSocket();
 
     const fetchNotifications = async () => {
       try {
+        const headers = {
+          ...(token && { Authorization: `Bearer ${token}` }),
+        };
+
         const response = await axios.get(`${API_URL}/api/notifications`, {
-          withCredentials: true,
+          headers,
         });
         if (response.data.success && isMounted) {
           setNotifications(response.data.notifications || []);
@@ -104,10 +107,14 @@ export default function Navbar() {
 
   const markAllRead = async () => {
     try {
+      const headers = {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      };
+
       await axios.put(
-       `${API_URL}/api/notifications/read-all`,
+        `${API_URL}/api/notifications/read-all`,
         {},
-        { withCredentials: true }
+        { headers }
       );
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
     } catch (err) {
@@ -117,9 +124,11 @@ export default function Navbar() {
 
   const deleteNotification = async (id) => {
     try {
-      await axios.delete(`${API_URL}/api/notifications/${id}`, {
-        withCredentials: true,
-      });
+      const headers = {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      };
+
+      await axios.delete(`${API_URL}/api/notifications/${id}`, { headers });
       setNotifications((prev) => prev.filter((n) => n._id !== id));
     } catch (err) {
       console.error("Delete notification error:", err);
