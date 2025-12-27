@@ -32,6 +32,7 @@ export default function ProfileDashboard() {
   const [address, setAddress] = useState("");
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(null);
+  const token = localStorage.getItem("user_token");
 
   const [passwordCurrent, setPasswordCurrent] = useState("");
   const [passwordNew, setPasswordNew] = useState("");
@@ -96,11 +97,12 @@ export default function ProfileDashboard() {
       if (avatarFile) formData.append("avatar", avatarFile);
 
       // FIXED URL HERE
+      const headers = {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      };
+
       const res = await axios.put(`${API_URL}/api/auth/me`, formData, {
-        withCredentials: true,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+        headers,
       });
 
       toast.success(res.data?.message || "Profile updated successfully!");
@@ -126,10 +128,14 @@ export default function ProfileDashboard() {
 
     try {
       setIsLoading(true);
+      const headers = {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      };
+
       const res = await axios.put(
-        `${backendURL}/api/auth/password`,
+        `${API_URL}/api/auth/password`,
         { currentPassword: passwordCurrent, newPassword: passwordNew },
-        { withCredentials: true }
+        { headers }
       );
       toast.success(res.data?.message || "Password updated successfully!");
       setPasswordCurrent("");
@@ -145,8 +151,12 @@ export default function ProfileDashboard() {
   const handleSavePreferences = async () => {
     try {
       setIsLoading(true);
+      const headers = {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      };
+
       const res = await axios.put(`${API_URL}/api/auth/preferences`, preferences, {
-        withCredentials: true,
+        headers,
       });
       toast.success(res.data?.message || "Preferences saved successfully!");
     } catch (err) {
