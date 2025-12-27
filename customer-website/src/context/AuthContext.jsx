@@ -11,25 +11,44 @@ export const UserAuthProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Ek hi Axios instance – sab requests ke liye
+  // Axios instance (cookie ki zarurat nahi ab)
   const api = axios.create({
     baseURL: import.meta.env.VITE_API_URL,
-    withCredentials: true,  // Yeh sabse important hai – cookie bhejne ke liye
   });
 
-  // ---------------- AUTH CHECK ----------------
+  // Har request mein token automatically add kar do (Bearer header)
+  api.interceptors.request.use((config) => {
+    const token = localStorage.getItem("user_token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  });
+
+  // ---------------- AUTH CHECK (on app load / refresh) ----------------
   const checkAuth = async () => {
     setLoading(true);
+    const token = localStorage.getItem("user_token");
+
+    if (!token) {
+      setUser(null);
+      setIsLoggedIn(false);
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await api.get("/api/auth/me");
       if (res.data.loggedIn && res.data.user) {
         setUser(res.data.user);
         setIsLoggedIn(true);
       } else {
+        localStorage.removeItem("user_token");
         setUser(null);
         setIsLoggedIn(false);
       }
     } catch (err) {
+      localStorage.removeItem("user_token");
       setUser(null);
       setIsLoggedIn(false);
       console.error("Auth check failed:", err);
@@ -38,12 +57,18 @@ export const UserAuthProvider = ({ children }) => {
     }
   };
 
-  // ---------------- LOGIN ----------------
+
+  // ---------------- USER LOGIN ----------------
   const login = async (email, password) => {
     setLoading(true);
     try {
       const res = await api.post("/api/auth/login", { email, password });
-      if (res.data.loggedIn && res.data.user) {
+
+
+      if (res.data.loggedIn && res.data.token && res.data.user) {
+        // Token localStorage mein save karo
+        localStorage.setItem("user_token", res.data.token);
+
         setUser(res.data.user);
         setIsLoggedIn(true);
         toast.success("Login successful!");
@@ -65,12 +90,14 @@ export const UserAuthProvider = ({ children }) => {
   const logout = async () => {
     setLoading(true);
     try {
-      await api.post("/api/auth/logout");
+
+      await api.post("/api/auth/logout"); // Optional call
       toast.info("Logged out successfully");
     } catch (err) {
       console.error("Logout error:", err);
       toast.warn("Logged out locally");
     } finally {
+      localStorage.removeItem("user_token");
       setUser(null);
       setIsLoggedIn(false);
       setLoading(false);
@@ -88,7 +115,8 @@ export const UserAuthProvider = ({ children }) => {
     }
   };
 
-  // Check auth on app load
+
+  // App load hone pe auth check karo
   useEffect(() => {
     checkAuth();
   }, []);
@@ -101,7 +129,8 @@ export const UserAuthProvider = ({ children }) => {
         loading,
         login,
         logout,
-        api,              // Ab yeh hi use karo har jagah
+
+        api,
         setUser,
         checkAuth,
         fetchUserClasses,
