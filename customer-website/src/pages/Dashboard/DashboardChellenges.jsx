@@ -119,7 +119,7 @@ export default function DashboardChallenges() {
         const loadGoals = async () => {
             try {
                 setGoalsLoading(true);
-                const res = await axios.get(`${API_BASE}/stats/today-goals`);
+                const res = await axios.get(`${API_BASE}/stats/today-goals`, { withCredentials: false });
                 setTodayGoals(res.data.goals || []);
             } catch (err) {
                 console.error("Failed to load goals:", err);
@@ -134,7 +134,7 @@ export default function DashboardChallenges() {
     const addTodayGoal = async () => {
         if (!newGoalText.trim()) return;
         try {
-            const res = await axios.post(`${API_BASE}/stats/add-goal`, { text: newGoalText.trim() });
+            const res = await axios.post(`${API_BASE}/stats/add-goal`, { text: newGoalText.trim() }, { withCredentials: false });
             setTodayGoals(res.data.allGoals);
             setNewGoalText('');
         } catch (err) {
@@ -144,10 +144,7 @@ export default function DashboardChallenges() {
 
     const toggleGoalComplete = async (goalId) => {
         try {
-            const res = await axios.post(
-                `${API_BASE}/stats/toggle-goal`,  
-                { goalId }
-            );
+            const res = await axios.post(`${API_BASE}/stats/toggle-goal`, { goalId }, { withCredentials: false });
 
             if (res.data.allGoals) {
                 setTodayGoals(res.data.allGoals);
@@ -172,7 +169,8 @@ export default function DashboardChallenges() {
         try {
             const res = await axios.post(
                 `${API_BASE}/stats/delete-goal`,
-                { goalId }
+                { goalId },
+                { withCredentials: false }
             );
             setTodayGoals(res.data.allGoals || []);
         } catch (err) {
@@ -202,7 +200,7 @@ export default function DashboardChallenges() {
         const loadChallenges = async () => {
             setLoading(true);
             try {
-                const res = await axios.get(`${API_BASE}/challenges/user`);
+                const res = await axios.get(`${API_BASE}/challenges/user`, { withCredentials: false });
                 const transformed = (res.data.challenges || []).map((ch) => {
                     const calculatedTotalCalories = (ch.days || []).reduce((sum, day) => {
                         return sum + (day.steps || day.exercises || []).reduce((s, step) => s + (step.calories || 0), 0);
@@ -254,7 +252,7 @@ export default function DashboardChallenges() {
                     setSelectedChallengeId(idToUse);
 
                     try {
-                        const progRes = await axios.get(`${API_BASE}/challenges/${idToUse}/progress`);
+                        const progRes = await axios.get(`${API_BASE}/challenges/${idToUse}/progress`, { withCredentials: false });
                         const prog = progRes.data.progress || {};
                         setCompletedExercises(prog.completedExercises || []);
                         setStreak(prog.streak || 0);
@@ -301,7 +299,7 @@ export default function DashboardChallenges() {
         if (!selectedChallengeId || loading) return;
         const loadProgress = async () => {
             try {
-                const res = await axios.get(`${API_BASE}/challenges/${selectedChallengeId}/progress`);
+                const res = await axios.get(`${API_BASE}/challenges/${selectedChallengeId}/progress`, { withCredentials: false });
                 const prog = res.data.progress || {};
                 setCompletedExercises(prog.completedExercises || []);
                 setStreak(prog.streak || 0);
@@ -377,7 +375,7 @@ export default function DashboardChallenges() {
                 await axios.post(`${API_BASE}/challenges/progress`, {
                     challengeId,
                     completedExerciseId: ex.id
-                });
+                }, { withCredentials: false });
 
                 // Refresh latest state from backend
                 const res = await axios.get(`${API_BASE}/challenges/${challengeId}/progress`);
@@ -400,7 +398,7 @@ export default function DashboardChallenges() {
             shouldConfetti = true;
             setCompleting(true);
             try {
-                await axios.patch(`${API_BASE}/challenges/${challengeId}/complete`, {});
+                await axios.patch(`${API_BASE}/challenges/${challengeId}/complete`, {}, { withCredentials: false });
                 console.log("✅ Full Challenge Completed & Saved to Backend!");
             } catch (err) {
                 console.error("Challenge complete sync failed:", err);
@@ -450,8 +448,8 @@ export default function DashboardChallenges() {
             await axios.post(`${API_BASE}/challenges/progress`, {
                 challengeId: selectedChallengeId,
                 completedExercises: filtered
-            }
-        );
+            }, { withCredentials: false });
+            
         } catch (err) {
             console.error("Repeat day sync failed:", err);
         }
