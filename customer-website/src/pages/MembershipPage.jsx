@@ -10,13 +10,15 @@ const MembershipPage = () => {
   const navigate = useNavigate();
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
+  const token = localStorage.getItem("user_token");
 
   useEffect(() => {
     const fetchPlans = async () => {
       try {
         const res = await axios.get(`${API_URL}/api/memberships`, {
-          withCredentials: true,
-        });
+          withCredentials: false,
+          headers: { Authorization: `Bearer ${token}` }
+      });
         setPlans(res.data);
       } catch (err) {
         console.error("Failed to fetch memberships:", err);
