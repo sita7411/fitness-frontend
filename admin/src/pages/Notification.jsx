@@ -14,7 +14,7 @@ import {
   Calendar,
 } from "lucide-react";
 import { getSocket } from "../utils/socket.js";
-
+const API_URL = import.meta.env.VITE_API_URL 
 const THEME = "#e3002a";
 
 const iconMap = {
@@ -41,7 +41,7 @@ export default function AdminNotifications() {
       setError(null);
 
       const { data } = await axios.get(
-        "http://localhost:5000/api/admin/notifications",
+        `${API_URL}/api/admin/notifications`,
         { withCredentials: true }
       );
 
@@ -116,7 +116,7 @@ export default function AdminNotifications() {
   const markAllRead = async () => {
     try {
       await axios.put(
-        "http://localhost:5000/api/admin/notifications/read-all",
+        `${API_URL}/api/admin/notifications/read-all`,
         {},
         { withCredentials: true }
       );
@@ -131,7 +131,7 @@ export default function AdminNotifications() {
   const deleteNotification = async (id) => {
     try {
       const response = await axios.delete(
-        `http://localhost:5000/api/admin/notifications/${id}`,
+       `${API_URL}/api/admin/notifications/${id}`,
         { withCredentials: true }
       );
 

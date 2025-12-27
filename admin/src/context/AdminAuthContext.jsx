@@ -11,10 +11,8 @@ export const AdminAuthProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // IMPORTANT FIX: baseURL is now /api (not /api/admin)
-  // This allows us to access ALL protected routes including /api/schedule/*
   const api = axios.create({
-    baseURL: "http://localhost:5000/api",
+    baseURL: import.meta.env.VITE_API_URL,
     withCredentials: true,
   });
 

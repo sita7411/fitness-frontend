@@ -39,6 +39,7 @@ const normalizeMeal = () => ({
     difficulty: "Easy",
     mealType: "Veg",
 });
+const API_URL = import.meta.env.VITE_API_URL;
 
 export default function AllNutritionPlans() {
     const [plans, setPlans] = useState([]);
@@ -55,7 +56,7 @@ export default function AllNutritionPlans() {
     const fetchPlans = async () => {
         try {
             setLoading(true);
-            const res = await axios.get("http://localhost:5000/api/nutrition/");
+            const res = await axios.get(`${API_URL}/api/nutrition/`);
             setPlans(res.data);
         } catch (err) {
             toast.error("Failed to load plans");
@@ -182,10 +183,10 @@ export default function AllNutritionPlans() {
 
         try {
             if (modalType === "add") {
-                await axios.post("http://localhost:5000/api/nutrition", formData);
+                await axios.post(`${API_URL}/api/nutrition`, formData);
                 toast.success("Plan created!");
             } else {
-                await axios.put(`http://localhost:5000/api/nutrition/${editPlan._id}`, formData);
+                await axios.put(`${API_URL}/api/nutrition/${editPlan._id}`, formData);
                 toast.success("Plan updated!");
             }
             fetchPlans();
@@ -204,7 +205,7 @@ export default function AllNutritionPlans() {
             const newStatus = plan.status === "Active" ? "Inactive" : "Active";
 
             // Update backend
-            const res = await axios.patch(`http://localhost:5000/api/nutrition/${id}/status`, { status: newStatus });
+            const res = await axios.patch(`${API_URL}/api/nutrition/${id}/status`, { status: newStatus });
 
             // Use backend response to update frontend
             setPlans(prev => prev.map(p => p._id === id ? { ...p, status: res.data.status } : p));
@@ -217,7 +218,7 @@ export default function AllNutritionPlans() {
     const deletePlan = async (id) => {
         if (!window.confirm("Delete permanently?")) return;
         try {
-            await axios.delete(`http://localhost:5000/api/nutrition/${id}`);
+            await axios.delete(`${API_URL}/api/nutrition/${id}`);
             setPlans(prev => prev.filter(p => p._id !== id));
             toast.success("Deleted!");
         } catch (err) {

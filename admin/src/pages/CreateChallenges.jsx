@@ -14,6 +14,7 @@ import {
   Check,
   UploadCloud
 } from "lucide-react";
+const API_URL = import.meta.env.VITE_API_URL;
 
 const THEME = "#e3002a";
 const LIGHT_BORDER = "#e5e7eb";
@@ -417,7 +418,7 @@ export default function CreateChallenges() {
         });
       });
 
-      const res = await fetch("http://localhost:5000/api/challenges/create", {
+      const res = await fetch(`${API_URL}/api/challenges/create`, {
         method: "POST",
         body: form,
        

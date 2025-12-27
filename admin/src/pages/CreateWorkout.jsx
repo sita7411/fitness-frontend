@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+const API_URL = import.meta.env.VITE_API_URL;
 
 const THEME = "#e3002a";
 const LIGHT_BORDER = "#e5e7eb";
@@ -485,7 +486,7 @@ export default function CreateWorkout() {
 
             formData.append("program", JSON.stringify(programData));
 
-            const res = await fetch("http://localhost:5000/api/programs", {
+            const res = await fetch(`${API_URL}/api/programs`, {
                 method: "POST",
                 body: formData,
                 credentials: "include",

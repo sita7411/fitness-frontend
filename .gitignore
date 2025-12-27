@@ -1,0 +1,6 @@
+fitness-backend/
+.env
+admin/.env
+customer-website/.env
+node_modules/
+.history/

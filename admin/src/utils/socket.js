@@ -3,11 +3,13 @@ import { io } from "socket.io-client";
 
 let socket = null;
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 export const getSocket = () => {
   if (!socket) {
-    socket = io("http://localhost:5000", {
+    socket = io(API_URL, {
       withCredentials: true,
-      autoConnect: true,
+      transports: ["websocket"], t
     });
     console.log("Admin socket instance created");
   }

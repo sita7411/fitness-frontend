@@ -5,6 +5,7 @@ import { Edit, Trash2, Eye, X, ChevronDown, Plus, Trash2 as TrashSmall } from "l
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { v4 as uuidv4 } from 'uuid';
+const API_URL = import.meta.env.VITE_API_URL;
 
 const ITEMS_PER_PAGE = 6;
 
@@ -63,7 +64,7 @@ export default function AllWorkouts() {
     const fetchWorkouts = async () => {
         try {
             setLoading(true);
-            const res = await axios.get("http://localhost:5000/api/programs");
+            const res = await axios.get(`${API_URL}/api/programs`);
             const mapped = res.data.map(w => ({
                 _id: w._id,
                 id: w.id,
@@ -115,7 +116,7 @@ export default function AllWorkouts() {
 
         if (type === "edit") {
             try {
-                const res = await axios.get(`http://localhost:5000/api/programs/${workout.id}`);
+                const res = await axios.get(`${API_URL}/api/programs/${workout.id}`);
                 const data = res.data;
 
                 setEditProgram({
@@ -207,7 +208,7 @@ export default function AllWorkouts() {
 
             // ← THIS IS THE FIX: capture the response
             const response = await axios.put(
-                `http://localhost:5000/api/programs/${editProgram.id}`,
+                `${API_URL}/api/programs/${editProgram.id}`,
                 formData
             );
 
@@ -233,7 +234,7 @@ export default function AllWorkouts() {
     const deleteWorkout = async (id) => {
         if (!window.confirm("Delete this program permanently?")) return;
         try {
-            await axios.delete(`http://localhost:5000/api/programs/${id}`);
+            await axios.delete(`${API_URL}/api/programs/${id}`);
             setWorkouts(prev => prev.filter(w => w.id !== id));
             toast.success("Program deleted");
         } catch (err) {
@@ -245,7 +246,7 @@ export default function AllWorkouts() {
         const workout = workouts.find(w => w.id === id);
         const newStatus = workout.status === "Active" ? "Inactive" : "Active";
         try {
-            await axios.patch(`http://localhost:5000/api/programs/${id}/status`, { status: newStatus });
+            await axios.patch(`${API_URL}/api/programs/${id}/status`, { status: newStatus });
             setWorkouts(prev => prev.map(w => w.id === id ? { ...w, status: newStatus } : w));
         } catch (err) {
             toast.error("Status update failed");

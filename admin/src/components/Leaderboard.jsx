@@ -22,7 +22,8 @@ import {
   Tooltip,
   XAxis,
 } from "recharts";
-import axios from "axios"; // ← Add axios (npm i axios)
+import axios from "axios"; 
+const API_URL = import.meta.env.VITE_API_URL;
 
 export default function AdminFitnessLeaderboard() {
   const THEME = "#e3002a";
@@ -40,14 +41,13 @@ export default function AdminFitnessLeaderboard() {
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
-  // FETCH LEADERBOARD DATA FROM API
   useEffect(() => {
     const fetchLeaderboard = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        const response = await axios.get("http://localhost:5000/api/leaderboard"); // ← Your backend endpoint
+        const response = await axios.get(`${API_URL}/api/leaderboard`); // ← Your backend endpoint
         const leaderboardData = response.data;
 
         // Ensure rank is correct (backend already ranks, but just in case)

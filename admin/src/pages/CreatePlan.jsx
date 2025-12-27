@@ -5,6 +5,7 @@ import { Plus, Trash2, X, Image, ArrowUpRight, Download, ChevronDown, ChevronUp,
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
+const API_URL = import.meta.env.VITE_API_URL;
 
 const THEME = "#e3002a";
 const LIGHT_BORDER = "#e5e7eb";
@@ -458,7 +459,7 @@ export default function CreateNutritionPlan() {
       });
 
       // Send to backend
-      const res = await axios.post("http://localhost:5000/api/nutrition/", formData, {
+      const res = await axios.post(`${API_URL}/api/nutrition/`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 

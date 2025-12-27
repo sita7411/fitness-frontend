@@ -4,7 +4,7 @@ import axios from "axios";
 import { Edit, Trash2, Eye, X, ChevronDown, Plus, Trash2 as TrashSmall } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
+const API_URL = import.meta.env.VITE_API_URL;
 const ITEMS_PER_PAGE = 6;
 
 const StatusToggle = ({ status, onToggle }) => {
@@ -53,7 +53,7 @@ export default function AllClasses() {
   const fetchClasses = async () => {
     try {
       setLoading(true);
-      const res = await axios.get("http://localhost:5000/api/classes");
+      const res = await axios.get(`${API_URL}/api/classes`);
       const mapped = res.data.map((c) => ({
         _id: c._id,
         name: c.title || "Untitled",
@@ -109,7 +109,7 @@ export default function AllClasses() {
 
     if (type === "edit") {
       try {
-        const res = await axios.get(`http://localhost:5000/api/classes/${cls._id}`);
+        const res = await axios.get(`${API_URL}/api/classes/${cls._id}`);
         const data = res.data;
 
         setEditClass({
@@ -166,7 +166,6 @@ export default function AllClasses() {
     try {
       const formData = new FormData();
 
-      // Clean data (thumbnail objects को सिर्फ url भेजो)
       const cleanData = {
         ...editClass,
         plans: editClass.plans || [],
@@ -207,7 +206,7 @@ export default function AllClasses() {
       });
 
       await axios.put(
-        `http://localhost:5000/api/classes/${editClass._id}`,
+        `${API_URL}/api/classes/${editClass._id}`,
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
@@ -227,7 +226,7 @@ export default function AllClasses() {
   const deleteClass = async (_id) => {
     if (!window.confirm("Delete this class permanently?")) return;
     try {
-      await axios.delete(`http://localhost:5000/api/classes/${_id}`);
+      await axios.delete(`${API_URL}/api/classes/${_id}`);
       setClasses((prev) => prev.filter((c) => c._id !== _id));
       toast.success("Class deleted");
     } catch (err) {
@@ -239,7 +238,7 @@ export default function AllClasses() {
     const cls = classes.find((c) => c._id === _id);
     const newStatus = cls.status === "Active" ? "Inactive" : "Active";
     try {
-      await axios.patch(`http://localhost:5000/api/classes/${_id}/status`, { status: newStatus });
+      await axios.patch(`${API_URL}/api/classes/${_id}/status`, { status: newStatus });
       setClasses((prev) => prev.map((c) => (c._id === _id ? { ...c, status: newStatus } : c)));
     } catch (err) {
       toast.error("Status update failed");

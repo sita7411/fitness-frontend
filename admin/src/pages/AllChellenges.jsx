@@ -4,6 +4,7 @@ import axios from "axios";
 import { Edit, Trash2, Eye, X, ChevronDown, Plus, Trash2 as TrashSmall } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+const API_URL = import.meta.env.VITE_API_URL;
 
 const ITEMS_PER_PAGE = 6;
 
@@ -54,7 +55,7 @@ export default function AllChallenges() {
   const fetchChallenges = async () => {
     try {
       setLoading(true);
-      const res = await axios.get("http://localhost:5000/api/challenges");
+      const res = await axios.get(`${API_URL}/api/challenges`);
       const mapped = res.data.map((c) => ({
         _id: c._id,
         title: c.title || "Untitled",
@@ -109,7 +110,7 @@ export default function AllChallenges() {
 
     if (type === "edit") {
       try {
-        const res = await axios.get(`http://localhost:5000/api/challenges/${challenge._id}`);
+        const res = await axios.get(`${API_URL}/api/challenges/${challenge._id}`);
         const data = res.data;
 
         setEditChallenge({
@@ -201,13 +202,13 @@ export default function AllChallenges() {
           if (step.image?.file) {
             const key = `step-${dayIdx}-${stepIdx}`;
             formData.append(key, step.image.file);
-            console.log("Appending step image:", key); 
+            console.log("Appending step image:", key);
           }
         });
       });
 
       await axios.put(
-        `http://localhost:5000/api/challenges/${editChallenge._id}`,
+        `${API_URL}/api/challenges/${editChallenge._id}`,
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
@@ -224,7 +225,7 @@ export default function AllChallenges() {
   const deleteChallenge = async (_id) => {
     if (!window.confirm("Delete this challenge permanently?")) return;
     try {
-      await axios.delete(`http://localhost:5000/api/challenges/${_id}`);
+      await axios.delete(`${API_URL}/api/challenges/${_id}`);
       toast.success("Challenge deleted");
       fetchChallenges();
     } catch (err) {
@@ -236,7 +237,7 @@ export default function AllChallenges() {
     const challenge = challenges.find((c) => c._id === _id);
     const newStatus = challenge.status === "Active" ? "Inactive" : "Active";
     try {
-      await axios.patch(`http://localhost:5000/api/challenges/${_id}/status`, { status: newStatus });
+      await axios.patch(`${API_URL}/api/challenges/${_id}/status`, { status: newStatus });
       setChallenges((prev) => prev.map((c) => (c._id === _id ? { ...c, status: newStatus } : c)));
     } catch (err) {
       toast.error("Status update failed");

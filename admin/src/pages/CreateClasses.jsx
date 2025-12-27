@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
+const API_URL = import.meta.env.VITE_API_URL;
 const THEME = "#e3002a";
 const LIGHT_BORDER = "#e5e7eb";
 const LIGHT_SHADOW = "0 4px 16px rgba(0,0,0,0.05)";
@@ -77,7 +77,6 @@ const ProDropdown = ({ options = [], value, onChange, className = "" }) => {
 /* ------------------------------------------
    Exercise Card
 ------------------------------------------*/
-// ------------------ ExerciseCard (UPDATED WITH SECTION + EQUIPMENT) ------------------
 const ExerciseCard = ({ ex, dayId, onUpdateExercise, onRemoveExercise }) => {
 
 
@@ -464,7 +463,7 @@ export default function CreateClasses() {
 
         try {
             const token = localStorage.getItem("token");
-            const res = await fetch("http://localhost:5000/api/classes", {
+            const res = await fetch(`${API_URL}/api/classes`, {
                 method: "POST",
                 headers: {
                     Authorization: `Bearer ${token}`,

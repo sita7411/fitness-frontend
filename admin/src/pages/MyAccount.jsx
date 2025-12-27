@@ -16,7 +16,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
 
-const API_BASE = "http://localhost:5000/api";
+const API_URL = import.meta.env.VITE_API_URL;
 
 const apiCall = async (endpoint, options = {}) => {
   let fullEndpoint = endpoint;
@@ -45,7 +45,7 @@ const apiCall = async (endpoint, options = {}) => {
     ...options,
   };
 
-  const response = await fetch(`${API_BASE}${fullEndpoint}`, config);
+  const response = await fetch(`${API_URL}${fullEndpoint}`, config);
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
@@ -95,8 +95,7 @@ export default function AdminMyAccount() {
       formData.append("email", admin.email);
       formData.append("phone", admin.phone || "");
 
-      // Direct fetch without apiCall logic – 100% /api/me pe jayega
-      const response = await fetch("http://localhost:5000/api/me", {
+      const response = await fetch(`${API_URL}/api/me`, {
         method: "PUT",
         credentials: "include",
         body: formData,

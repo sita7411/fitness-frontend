@@ -11,6 +11,7 @@ import {
   Star,
   HeartPulse,
 } from "lucide-react";
+const API_URL = import.meta.env.VITE_API_URL;
 
 const iconOptions = [
   { name: "Mail", component: Mail },
@@ -40,9 +41,8 @@ function Dropdown({ value, onChange, options }) {
           </span>
         </div>
         <svg
-          className={`w-4 h-4 text-gray-500 transition-transform ${
-            open ? "rotate-180" : "rotate-0"
-          }`}
+          className={`w-4 h-4 text-gray-500 transition-transform ${open ? "rotate-180" : "rotate-0"
+            }`}
           fill="none"
           stroke="currentColor"
           strokeWidth="2"
@@ -84,13 +84,13 @@ export default function AdminSettingsProfessional() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // Fetch settings from backend with cookies
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/settings", {
-          credentials: "include", // Sends cookies automatically
+        const res = await fetch(`${API_URL}/api/settings`, {
+          credentials: "include",
         });
+
         if (!res.ok) {
           if (res.status === 401) {
             toast.error("Unauthorized. Please log in as admin.");
@@ -157,11 +157,12 @@ export default function AdminSettingsProfessional() {
     if (logoFile) formData.append("logo", logoFile);
 
     try {
-      const res = await fetch("http://localhost:5000/api/settings", {
+      const res = await fetch(`${API_URL}/api/settings`, {
         method: "POST",
-        credentials: "include", // Critical: sends the jwt cookie
+        credentials: "include",
         body: formData,
       });
+
 
       const result = await res.json();
 

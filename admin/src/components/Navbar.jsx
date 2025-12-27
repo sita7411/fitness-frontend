@@ -21,6 +21,7 @@ import { useNavigate } from "react-router-dom";
 import { useAdminAuth } from "../context/AdminAuthContext";
 import axios from "axios";
 import { getSocket } from "../utils/socket";
+const API_URL = import.meta.env.VITE_API_URL;
 
 const THEME = "#e3002a";
 const iconMap = {
@@ -70,7 +71,7 @@ export default function Navbar({ hideNavbar = false }) {
 
     const fetchNotifications = async () => {
       try {
-        const { data } = await axios.get("http://localhost:5000/api/admin/notifications", {
+        const { data } = await axios.get(`${API_URL}/api/admin/notifications`, {
           withCredentials: true,
         });
         if (data.success && isMounted) {
@@ -125,7 +126,7 @@ export default function Navbar({ hideNavbar = false }) {
   const markAllRead = async () => {
     try {
       await axios.put(
-        "http://localhost:5000/api/admin/notifications/read-all",
+        `${API_URL}/api/admin/notifications/read-all`,
         {},
         { withCredentials: true }
       );
@@ -139,7 +140,7 @@ export default function Navbar({ hideNavbar = false }) {
   // Delete single notification
   const deleteNotification = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/admin/notifications/${id}`, {
+      await axios.delete(`${API_URL}/admin/notifications/${id}`, {
         withCredentials: true,
       });
       setNotifications((prev) => {
