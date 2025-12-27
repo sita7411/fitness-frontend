@@ -68,13 +68,29 @@ export default function DashboardHome() {
   // Fetch all data
   useEffect(() => {
     const fetchAll = async () => {
+      const token = localStorage.getItem("user_token");
       try {
         const [weeklyRes, todayRes, sessionRes, scheduleRes, notificationsRes] = await Promise.all([
-          axios.get("/api/stats/weekly", { withCredentials: false }),
-          axios.get("/api/stats/today", { withCredentials: false }),
-          axios.get("/api/stats/latest-session", { withCredentials: false }),
-          axios.get("/api/stats/today-schedule", { withCredentials: false }),
-          axios.get(`${import.meta.env.VITE_API_URL}/api/notifications`, { withCredentials: false }),
+          axios.get("/api/stats/weekly", {
+            withCredentials: false,
+            headers: token ? { Authorization: `Bearer ${token}` } : {}
+          }),
+          axios.get("/api/stats/today", {
+            withCredentials: false,
+            headers: token ? { Authorization: `Bearer ${token}` } : {}
+          }),
+          axios.get("/api/stats/latest-session", {
+            withCredentials: false,
+            headers: token ? { Authorization: `Bearer ${token}` } : {}
+          }),
+          axios.get("/api/stats/today-schedule", {
+            withCredentials: false,
+            headers: token ? { Authorization: `Bearer ${token}` } : {}
+          }),
+          axios.get(`${import.meta.env.VITE_API_URL}/api/notifications`, {
+            withCredentials: false,
+            headers: token ? { Authorization: `Bearer ${token}` } : {}
+          }),
         ]);
 
         // Weekly Data
