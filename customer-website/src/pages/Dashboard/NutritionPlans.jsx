@@ -94,7 +94,10 @@ function WaterTracker({ value, setCups }) {
       await axios.post(
         `${API_URL}/api/stats/water`,
         { increment },
-        { withCredentials: true }
+        {
+          withCredentials: false,
+          headers: { Authorization: `Bearer ${token}` }
+        }
       );
 
       setCups((prev) => prev + increment);
@@ -308,7 +311,7 @@ export default function NutritionPage() {
   const [progressLoading, setProgressLoading] = useState(true);
   const DEFAULT_PREP_MIN = 10;
   const DEFAULT_COOK_MIN = 20;
-
+  const token = localStorage.getItem("user_token");
   const getMinutes = (value) => {
     if (typeof value === 'number') return value;
     if (typeof value === 'string') {
@@ -359,7 +362,6 @@ export default function NutritionPage() {
 
     try {
       console.log("Marking meal as complete:", mealIdStr, "Plan:", currentPlan._id, "Day:", selectedDayIndex);
-
       await axios.post(
         `${API_URL}/api/nutrition/mark-meal-complete`,
         {
@@ -367,9 +369,11 @@ export default function NutritionPage() {
           planId: currentPlan._id,
           dayIndex: selectedDayIndex,
         },
-        { withCredentials: true }
+        {
+          withCredentials: false,
+          headers: { Authorization: `Bearer ${token}` }
+        }
       );
-
 
       await axios.post(
         `${API_URL}/api/stats/meal`,
@@ -380,7 +384,10 @@ export default function NutritionPage() {
           carbs: meal.nutrition?.carbs || 0,
           fats: meal.nutrition?.fat || 0,
         },
-        { withCredentials: true }
+        {
+          withCredentials: false,
+          headers: { Authorization: `Bearer ${token}` }
+        }
       );
 
       setCompletedMeals((prev) => {
@@ -404,9 +411,18 @@ export default function NutritionPage() {
         setLoading(true);
 
         const [plansRes, todayStatsRes, weeklyRes] = await Promise.all([
-          axios.get(`${API_URL}/api/nutrition/my/plans`, { withCredentials: true }),
-          axios.get(`${API_URL}/api/stats/today`, { withCredentials: true }),
-          axios.get(`${API_URL}/api/stats/weekly`, { withCredentials: true }),
+          axios.get(`${API_URL}/api/nutrition/my/plans`, {
+            withCredentials: false,
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          axios.get(`${API_URL}/api/stats/today`, {
+            withCredentials: false,
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          axios.get(`${API_URL}/api/stats/weekly`, {
+            withCredentials: false,
+            headers: { Authorization: `Bearer ${token}` }
+          }),
         ]);
 
         const userPlans = plansRes.data.plans || [];
@@ -447,10 +463,13 @@ export default function NutritionPage() {
         setProgressLoading(true);
         console.log("Fetching progress for plan:", selectedPlanId, "day:", selectedDayIndex);
 
-        const userRes = await axios.get(
-          `${API_URL}/api/auth/me`,
-          { withCredentials: true }
-        );
+       const userRes = await axios.get(
+  `${API_URL}/api/auth/me`,
+  {
+    withCredentials: false,
+    headers: { Authorization: `Bearer ${token}` }
+  }
+);
 
         console.log("FULL USER FROM /me:", userRes.data.user);
         console.log("NUTRITION PROGRESS FROM SERVER:", userRes.data.user?.nutritionProgress);
