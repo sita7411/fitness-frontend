@@ -14,6 +14,7 @@ export const AdminAuthProvider = ({ children }) => {
   // Axios instance (no withCredentials needed anymore)
   const api = axios.create({
     baseURL: import.meta.env.VITE_API_URL,
+    withCredentials: false,
   });
 
   // Add token to every request automatically
