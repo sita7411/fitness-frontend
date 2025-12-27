@@ -28,6 +28,7 @@ const Programs = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
+  const token = localStorage.getItem("user_token");
 
   const difficulties = ["All", "Beginner", "Intermediate", "Advanced"];
   const categories = ["All", "Training", "Wellness", "Transformation", "Nutrition"];
@@ -36,7 +37,10 @@ const Programs = () => {
   useEffect(() => {
     const fetchPrograms = async () => {
       try {
-        const { data } = await axios.get(`${API_URL}/api/programs`);
+        const { data } = await axios.get(`${API_URL}/api/programs`, {
+          withCredentials: false,
+          headers: { Authorization: `Bearer ${token}` }
+        });
 
         const safeData = data.map((p) => ({
           ...p,
@@ -46,8 +50,8 @@ const Programs = () => {
           category: p.category || "Training",
           duration: p.duration || "30 – 45 min",
           image: p.thumbnail || "https://via.placeholder.com/1200x675?text=No+Image+Available",
-          trainerName: p.trainerName || "FitTrack Trainer", 
-          status: p.status || "Active", 
+          trainerName: p.trainerName || "FitTrack Trainer",
+          status: p.status || "Active",
         }));
 
 
@@ -67,9 +71,18 @@ const Programs = () => {
     if (!program) return;
 
     try {
-      const res = await axios.patch(`${API_URL}/api/programs/${programId}/status`, {
-        status: program.status === "Active" ? "Inactive" : "Active",
-      });
+      const headers = {
+        "Content-Type": "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+      };
+
+      const newStatus = program.status === "Active" ? "Inactive" : "Active";
+
+      const res = await axios.patch(
+        `${API_URL}/api/programs/${programId}/status`,
+        { status: newStatus },
+        { headers }
+      );
 
       setPrograms(programs.map(p =>
         p.id === programId ? { ...p, status: res.data.status } : p
