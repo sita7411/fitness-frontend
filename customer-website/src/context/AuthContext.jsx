@@ -11,36 +11,20 @@ export const UserAuthProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Axios instance for auth routes (/login, /logout, /me)
+  // Ek hi Axios instance – sab requests ke liye
   const api = axios.create({
-    baseURL: `${import.meta.env.VITE_API_URL}/api/auth`,
-    withCredentials: true,
-  });
-
-  // Axios instance for all protected routes
-  const protectedApi = axios.create({
     baseURL: import.meta.env.VITE_API_URL,
-    withCredentials: true,
-  });
-
-  // Automatically attach token to protectedApi
-  protectedApi.interceptors.request.use((config) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
+    withCredentials: true,  // Yeh sabse important hai – cookie bhejne ke liye
   });
 
   // ---------------- AUTH CHECK ----------------
   const checkAuth = async () => {
     setLoading(true);
     try {
-      const res = await protectedApi.get("/api/auth/me"); // full path
+      const res = await api.get("/api/auth/me");
       if (res.data.loggedIn && res.data.user) {
         setUser(res.data.user);
         setIsLoggedIn(true);
-        if (res.data.token) localStorage.setItem("token", res.data.token);
       } else {
         setUser(null);
         setIsLoggedIn(false);
@@ -58,11 +42,10 @@ export const UserAuthProvider = ({ children }) => {
   const login = async (email, password) => {
     setLoading(true);
     try {
-      const res = await api.post("/login", { email, password });
+      const res = await api.post("/api/auth/login", { email, password });
       if (res.data.loggedIn && res.data.user) {
         setUser(res.data.user);
         setIsLoggedIn(true);
-        if (res.data.token) localStorage.setItem("token", res.data.token);
         toast.success("Login successful!");
         return { success: true };
       } else {
@@ -82,7 +65,7 @@ export const UserAuthProvider = ({ children }) => {
   const logout = async () => {
     setLoading(true);
     try {
-      await api.post("/logout");
+      await api.post("/api/auth/logout");
       toast.info("Logged out successfully");
     } catch (err) {
       console.error("Logout error:", err);
@@ -90,7 +73,6 @@ export const UserAuthProvider = ({ children }) => {
     } finally {
       setUser(null);
       setIsLoggedIn(false);
-      localStorage.removeItem("token"); // remove token
       setLoading(false);
     }
   };
@@ -98,7 +80,7 @@ export const UserAuthProvider = ({ children }) => {
   // ---------------- EXAMPLE: FETCH CLASSES ----------------
   const fetchUserClasses = async () => {
     try {
-      const res = await protectedApi.get("/api/classes/user");
+      const res = await api.get("/api/classes/user");
       return res.data;
     } catch (err) {
       console.error("Failed to fetch classes:", err);
@@ -106,7 +88,7 @@ export const UserAuthProvider = ({ children }) => {
     }
   };
 
-  // ---------------- USE EFFECT ----------------
+  // Check auth on app load
   useEffect(() => {
     checkAuth();
   }, []);
@@ -119,8 +101,7 @@ export const UserAuthProvider = ({ children }) => {
         loading,
         login,
         logout,
-        api,             // use for /auth routes
-        protectedApi,    // use for all protected API calls
+        api,              // Ab yeh hi use karo har jagah
         setUser,
         checkAuth,
         fetchUserClasses,
