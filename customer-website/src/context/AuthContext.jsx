@@ -9,20 +9,38 @@ const UserAuthContext = createContext();
 export const UserAuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [loading, setLoading] = useState(true); 
+  const [loading, setLoading] = useState(true);
 
+  // Axios instance for auth routes (/login, /logout, /me)
   const api = axios.create({
-    baseURL: `${import.meta.env.VITE_API_URL}/api/auth`, 
+    baseURL: `${import.meta.env.VITE_API_URL}/api/auth`,
     withCredentials: true,
   });
 
+  // Axios instance for all protected routes
+  const protectedApi = axios.create({
+    baseURL: import.meta.env.VITE_API_URL,
+    withCredentials: true,
+  });
+
+  // Automatically attach token to protectedApi
+  protectedApi.interceptors.request.use((config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  });
+
+  // ---------------- AUTH CHECK ----------------
   const checkAuth = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/me");
+      const res = await protectedApi.get("/api/auth/me"); // full path
       if (res.data.loggedIn && res.data.user) {
         setUser(res.data.user);
         setIsLoggedIn(true);
+        if (res.data.token) localStorage.setItem("token", res.data.token);
       } else {
         setUser(null);
         setIsLoggedIn(false);
@@ -36,15 +54,15 @@ export const UserAuthProvider = ({ children }) => {
     }
   };
 
-  // User Login
+  // ---------------- LOGIN ----------------
   const login = async (email, password) => {
-    setLoading(true); 
+    setLoading(true);
     try {
       const res = await api.post("/login", { email, password });
-
       if (res.data.loggedIn && res.data.user) {
         setUser(res.data.user);
-        setIsLoggedIn(true); 
+        setIsLoggedIn(true);
+        if (res.data.token) localStorage.setItem("token", res.data.token);
         toast.success("Login successful!");
         return { success: true };
       } else {
@@ -60,8 +78,9 @@ export const UserAuthProvider = ({ children }) => {
     }
   };
 
-  // User Logout
+  // ---------------- LOGOUT ----------------
   const logout = async () => {
+    setLoading(true);
     try {
       await api.post("/logout");
       toast.info("Logged out successfully");
@@ -71,10 +90,23 @@ export const UserAuthProvider = ({ children }) => {
     } finally {
       setUser(null);
       setIsLoggedIn(false);
+      localStorage.removeItem("token"); // remove token
       setLoading(false);
     }
   };
 
+  // ---------------- EXAMPLE: FETCH CLASSES ----------------
+  const fetchUserClasses = async () => {
+    try {
+      const res = await protectedApi.get("/api/classes/user");
+      return res.data;
+    } catch (err) {
+      console.error("Failed to fetch classes:", err);
+      throw err;
+    }
+  };
+
+  // ---------------- USE EFFECT ----------------
   useEffect(() => {
     checkAuth();
   }, []);
@@ -87,9 +119,11 @@ export const UserAuthProvider = ({ children }) => {
         loading,
         login,
         logout,
-        api,
-        setUser,      
-        checkAuth,     
+        api,             // use for /auth routes
+        protectedApi,    // use for all protected API calls
+        setUser,
+        checkAuth,
+        fetchUserClasses,
       }}
     >
       {children}
