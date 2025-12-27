@@ -91,7 +91,7 @@ export default function MyClasses() {
   const [showProgress, setShowProgress] = useState(false);
   const [showAchievements, setShowAchievements] = useState(false);
 
-  // Backend से आने वाला progress
+  const token = localStorage.getItem("user_token");
   const [progressData, setProgressData] = useState({
     completedExercises: [],
     streak: 0,
@@ -131,7 +131,10 @@ export default function MyClasses() {
     const loadClasses = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`${API_BASE}/classes/user`, { withCredentials: false });
+        const res = await axios.get(`${API_BASE}/classes/user`, {
+          withCredentials: false,
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
         const transformed = (res.data.classes || []).map(cls => ({
           id: cls._id,
           title: cls.title || 'Untitled Class',
@@ -176,7 +179,10 @@ export default function MyClasses() {
 
     const loadProgress = async (classId) => {
       try {
-        const res = await axios.get(`${API_BASE}/classes/${classId}/progress`, { withCredentials: false });
+        const res = await axios.get(`${API_BASE}/classes/${classId}/progress`, {
+          withCredentials: false,
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
         setProgressData(res.data.progress || { completedExercises: [], streak: 0, achievements: [] });
       } catch (err) {
         console.error('Failed to load progress', err);
@@ -252,7 +258,10 @@ export default function MyClasses() {
     axios.post(`${API_BASE}/classes/progress`, {
       classId: selectedProgramId,
       completedExerciseId: ex.id,
-    }, { withCredentials: false })
+    }, {
+      withCredentials: false,
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    })
       .then(res => {
         setProgressData(res.data.progress);
       })
@@ -303,7 +312,10 @@ export default function MyClasses() {
     axios.post(`${API_BASE}/classes/progress`, {
       classId: selectedProgramId,
       completedExercises: filtered,
-    }, { withCredentials: false });
+    }, {
+      withCredentials: false,
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    });
 
     setCurrentIndex(0);
   }
@@ -314,7 +326,10 @@ export default function MyClasses() {
     axios.post(`${API_BASE}/classes/progress`, {
       classId: selectedProgramId,
       completedExercises: [],
-    }, { withCredentials: false });
+    }, {
+      withCredentials: false,
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    });
 
     setSelectedDayIndex(0);
     setCurrentIndex(0);
@@ -415,7 +430,10 @@ export default function MyClasses() {
                   setFilter('All');
 
                   try {
-                    const res = await axios.get(`${API_BASE}/classes/${p.id}/progress`, { withCredentials: false });
+                    const res = await axios.get(`${API_BASE}/classes/${p.id}/progress`, {
+                      withCredentials: false,
+                      headers: token ? { Authorization: `Bearer ${token}` } : {}
+                    });
                     setProgressData(res.data.progress || { completedExercises: [], streak: 0, achievements: [] });
                   } catch (err) {
                     setProgressData({ completedExercises: [], streak: 0, achievements: [] });
