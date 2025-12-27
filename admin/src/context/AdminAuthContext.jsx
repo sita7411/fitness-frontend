@@ -11,43 +11,70 @@ export const AdminAuthProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // Axios instance (no withCredentials needed anymore)
   const api = axios.create({
     baseURL: import.meta.env.VITE_API_URL,
   });
 
+  // Add token to every request automatically
+  api.interceptors.request.use((config) => {
+    const token = localStorage.getItem("admin_token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  });
+
+  // ---------------- AUTH CHECK ----------------
   const checkAuth = async () => {
     setLoading(true);
+    const token = localStorage.getItem("admin_token");
+
+    if (!token) {
+      setAdmin(null);
+      setIsLoggedIn(false);
+      setLoading(false);
+      return;
+    }
+
     try {
-      const res = await api.get("/api/admin/me");
+      // Assuming your backend has a unified /api/auth/me that works for both
+      // If you have separate /api/admin/me, change it here
+      const res = await api.get("/api/auth/me");
 
       if (res.data.loggedIn && res.data.user?.role === "admin") {
         setAdmin(res.data.user);
         setIsLoggedIn(true);
       } else {
+        localStorage.removeItem("admin_token");
         setAdmin(null);
         setIsLoggedIn(false);
       }
     } catch (err) {
+      localStorage.removeItem("admin_token");
       setAdmin(null);
       setIsLoggedIn(false);
+      console.error("Admin auth check failed:", err);
     } finally {
       setLoading(false);
     }
   };
 
+  // ---------------- ADMIN LOGIN ----------------
   const login = async (email, password) => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const res = await api.post("/api/admin/login", { email, password });
+      const res = await api.post("/api/auth/adminLogin", { email, password });
 
-      if (res.data.loggedIn && res.data.user?.role === "admin") {
+      if (res.data.loggedIn && res.data.token && res.data.user?.role === "admin") {
+        localStorage.setItem("admin_token", res.data.token); // Save token
         setAdmin(res.data.user);
         setIsLoggedIn(true);
         toast.success("Admin logged in successfully!");
         return { success: true };
       } else {
-        toast.error("Invalid admin credentials");
-        return { success: false };
+        toast.error(res.data.message || "Invalid admin credentials");
+        return { success: false, message: res.data.message };
       }
     } catch (err) {
       const msg = err.response?.data?.message || "Invalid admin credentials";
@@ -58,19 +85,24 @@ export const AdminAuthProvider = ({ children }) => {
     }
   };
 
+  // ---------------- LOGOUT ----------------
   const logout = async () => {
+    setLoading(true);
     try {
-      await api.post("/api/admin/logout");
+      await api.post("/api/auth/logout"); // Optional: backend can invalidate if needed
+      toast.info("Admin logged out successfully");
     } catch (err) {
-      console.error("Admin logout API error:", err);
+      console.error("Admin logout error:", err);
+      toast.warn("Logged out locally");
     } finally {
+      localStorage.removeItem("admin_token");
       setAdmin(null);
       setIsLoggedIn(false);
-      toast.info("Admin logged out");
+      setLoading(false);
     }
   };
 
-  // Check auth status on app load
+  // Check auth on app load
   useEffect(() => {
     checkAuth();
   }, []);
@@ -80,10 +112,10 @@ export const AdminAuthProvider = ({ children }) => {
       value={{
         admin,
         isLoggedIn,
+        loading,
         login,
         logout,
-        loading,
-        api,          
+        api,
         checkAuth,
       }}
     >
