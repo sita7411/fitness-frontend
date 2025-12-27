@@ -21,7 +21,8 @@ const ChallengesPage = () => {
       try {
         setLoading(true);
         const { data } = await axios.get(
-          `${import.meta.env.VITE_API_URL}/api/challenges`
+          `${import.meta.env.VITE_API_URL}/api/challenges`,
+          { withCredentials: false }
         );
         setChallengesData(
           data.map((ch) => ({
