@@ -119,7 +119,7 @@ export default function DashboardChallenges() {
         const loadGoals = async () => {
             try {
                 setGoalsLoading(true);
-                const res = await axios.get(`${API_BASE}/stats/today-goals`, { withCredentials: true });
+                const res = await axios.get(`${API_BASE}/stats/today-goals`);
                 setTodayGoals(res.data.goals || []);
             } catch (err) {
                 console.error("Failed to load goals:", err);
@@ -134,7 +134,7 @@ export default function DashboardChallenges() {
     const addTodayGoal = async () => {
         if (!newGoalText.trim()) return;
         try {
-            const res = await axios.post(`${API_BASE}/stats/add-goal`, { text: newGoalText.trim() }, { withCredentials: true });
+            const res = await axios.post(`${API_BASE}/stats/add-goal`, { text: newGoalText.trim() });
             setTodayGoals(res.data.allGoals);
             setNewGoalText('');
         } catch (err) {
@@ -146,8 +146,7 @@ export default function DashboardChallenges() {
         try {
             const res = await axios.post(
                 `${API_BASE}/stats/toggle-goal`,  
-                { goalId },
-                { withCredentials: true }
+                { goalId }
             );
 
             if (res.data.allGoals) {
@@ -173,8 +172,7 @@ export default function DashboardChallenges() {
         try {
             const res = await axios.post(
                 `${API_BASE}/stats/delete-goal`,
-                { goalId },
-                { withCredentials: true }
+                { goalId }
             );
             setTodayGoals(res.data.allGoals || []);
         } catch (err) {
@@ -204,7 +202,7 @@ export default function DashboardChallenges() {
         const loadChallenges = async () => {
             setLoading(true);
             try {
-                const res = await axios.get(`${API_BASE}/challenges/user`, { withCredentials: true });
+                const res = await axios.get(`${API_BASE}/challenges/user`);
                 const transformed = (res.data.challenges || []).map((ch) => {
                     const calculatedTotalCalories = (ch.days || []).reduce((sum, day) => {
                         return sum + (day.steps || day.exercises || []).reduce((s, step) => s + (step.calories || 0), 0);
@@ -256,7 +254,7 @@ export default function DashboardChallenges() {
                     setSelectedChallengeId(idToUse);
 
                     try {
-                        const progRes = await axios.get(`${API_BASE}/challenges/${idToUse}/progress`, { withCredentials: true });
+                        const progRes = await axios.get(`${API_BASE}/challenges/${idToUse}/progress`);
                         const prog = progRes.data.progress || {};
                         setCompletedExercises(prog.completedExercises || []);
                         setStreak(prog.streak || 0);
@@ -303,7 +301,7 @@ export default function DashboardChallenges() {
         if (!selectedChallengeId || loading) return;
         const loadProgress = async () => {
             try {
-                const res = await axios.get(`${API_BASE}/challenges/${selectedChallengeId}/progress`, { withCredentials: true });
+                const res = await axios.get(`${API_BASE}/challenges/${selectedChallengeId}/progress`);
                 const prog = res.data.progress || {};
                 setCompletedExercises(prog.completedExercises || []);
                 setStreak(prog.streak || 0);
@@ -379,10 +377,10 @@ export default function DashboardChallenges() {
                 await axios.post(`${API_BASE}/challenges/progress`, {
                     challengeId,
                     completedExerciseId: ex.id
-                }, { withCredentials: true });
+                });
 
                 // Refresh latest state from backend
-                const res = await axios.get(`${API_BASE}/challenges/${challengeId}/progress`, { withCredentials: true });
+                const res = await axios.get(`${API_BASE}/challenges/${challengeId}/progress`);
                 const updated = res.data.progress || {};
                 setStreak(updated.streak || 0);
                 setLastWorkoutDate(updated.lastCompletedDate ? new Date(updated.lastCompletedDate).toDateString() : null);
@@ -402,7 +400,7 @@ export default function DashboardChallenges() {
             shouldConfetti = true;
             setCompleting(true);
             try {
-                await axios.patch(`${API_BASE}/challenges/${challengeId}/complete`, {}, { withCredentials: true });
+                await axios.patch(`${API_BASE}/challenges/${challengeId}/complete`, {});
                 console.log("✅ Full Challenge Completed & Saved to Backend!");
             } catch (err) {
                 console.error("Challenge complete sync failed:", err);
@@ -452,7 +450,8 @@ export default function DashboardChallenges() {
             await axios.post(`${API_BASE}/challenges/progress`, {
                 challengeId: selectedChallengeId,
                 completedExercises: filtered
-            }, { withCredentials: true });
+            }
+        );
         } catch (err) {
             console.error("Repeat day sync failed:", err);
         }
@@ -469,7 +468,7 @@ export default function DashboardChallenges() {
             await axios.post(`${API_BASE}/challenges/progress`, {
                 challengeId: selectedChallengeId,
                 completedExercises: []
-            }, { withCredentials: true });
+            });
         } catch (err) {
             console.error("Restart sync failed:", err);
         }
@@ -568,7 +567,7 @@ export default function DashboardChallenges() {
 
                                     // Load new challenge progress
                                     try {
-                                        const res = await axios.get(`${API_BASE}/challenges/${c.id}/progress`, { withCredentials: true });
+                                        const res = await axios.get(`${API_BASE}/challenges/${c.id}/progress`);
                                         const prog = res.data.progress || {};
                                         setCompletedExercises(prog.completedExercises || []);
                                         setStreak(prog.streak || 0);
