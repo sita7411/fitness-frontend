@@ -64,7 +64,7 @@ export const AdminAuthProvider = ({ children }) => {
   const login = async (email, password) => {
     setLoading(true);
     try {
-      const res = await api.post("/api/auth/adminLogin", { email, password });
+      const res = await api.post("/api/admin/login", { email, password });
 
       if (res.data.loggedIn && res.data.token && res.data.user?.role === "admin") {
         localStorage.setItem("admin_token", res.data.token); // Save token
@@ -89,7 +89,7 @@ export const AdminAuthProvider = ({ children }) => {
   const logout = async () => {
     setLoading(true);
     try {
-      await api.post("/api/auth/logout"); // Optional: backend can invalidate if needed
+      await api.post("/api/admin/logout"); // Optional: backend can invalidate if needed
       toast.info("Admin logged out successfully");
     } catch (err) {
       console.error("Admin logout error:", err);
