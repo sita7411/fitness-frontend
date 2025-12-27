@@ -131,7 +131,7 @@ export default function MyClasses() {
     const loadClasses = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`${API_BASE}/classes/user`);
+        const res = await axios.get(`${API_BASE}/classes/user`, { withCredentials: false });
         const transformed = (res.data.classes || []).map(cls => ({
           id: cls._id,
           title: cls.title || 'Untitled Class',
@@ -176,7 +176,7 @@ export default function MyClasses() {
 
     const loadProgress = async (classId) => {
       try {
-        const res = await axios.get(`${API_BASE}/classes/${classId}/progress`);
+        const res = await axios.get(`${API_BASE}/classes/${classId}/progress`, { withCredentials: false });
         setProgressData(res.data.progress || { completedExercises: [], streak: 0, achievements: [] });
       } catch (err) {
         console.error('Failed to load progress', err);
@@ -252,7 +252,7 @@ export default function MyClasses() {
     axios.post(`${API_BASE}/classes/progress`, {
       classId: selectedProgramId,
       completedExerciseId: ex.id,
-    })
+    }, { withCredentials: false })
       .then(res => {
         setProgressData(res.data.progress);
       })
@@ -303,7 +303,7 @@ export default function MyClasses() {
     axios.post(`${API_BASE}/classes/progress`, {
       classId: selectedProgramId,
       completedExercises: filtered,
-    });
+    }, { withCredentials: false });
 
     setCurrentIndex(0);
   }
@@ -314,7 +314,7 @@ export default function MyClasses() {
     axios.post(`${API_BASE}/classes/progress`, {
       classId: selectedProgramId,
       completedExercises: [],
-    });
+    }, { withCredentials: false });
 
     setSelectedDayIndex(0);
     setCurrentIndex(0);
@@ -415,7 +415,7 @@ export default function MyClasses() {
                   setFilter('All');
 
                   try {
-                    const res = await axios.get(`${API_BASE}/classes/${p.id}/progress`);
+                    const res = await axios.get(`${API_BASE}/classes/${p.id}/progress`, { withCredentials: false });
                     setProgressData(res.data.progress || { completedExercises: [], streak: 0, achievements: [] });
                   } catch (err) {
                     setProgressData({ completedExercises: [], streak: 0, achievements: [] });
@@ -570,8 +570,8 @@ export default function MyClasses() {
                     onClick={() => finishExercise(true)}
                     disabled={progressData.completedExercises.includes(exercises[currentIndex]?.id)}
                     className={`py-3 rounded-full font-medium transition ${progressData.completedExercises.includes(exercises[currentIndex]?.id)
-                        ? 'bg-gray-400 text-white cursor-not-allowed'
-                        : 'text-white'
+                      ? 'bg-gray-400 text-white cursor-not-allowed'
+                      : 'text-white'
                       }`}
                     style={{
                       background: progressData.completedExercises.includes(exercises[currentIndex]?.id) ? '#fe7c94ff' : THEME
