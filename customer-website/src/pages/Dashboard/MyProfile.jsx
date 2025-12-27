@@ -20,8 +20,11 @@ export default function MyProfile() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
+        const token = localStorage.getItem("user_token");
+
         const res = await axios.get(`${API_URL}/api/auth/me`, {
-          withCredentials: false
+          withCredentials: false,
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
         });
 
         if (res.data.loggedIn) {
@@ -114,11 +117,14 @@ export default function MyProfile() {
     }
 
     try {
-      const res = await axios.put(
-        `${API_URL}/api/auth/me`,
-        payload,
-        { withCredentials: false }
-      );
+     const res = await axios.put(
+  `${API_URL}/api/auth/me`,
+  payload,
+  {
+    withCredentials: false,
+    headers: token ? { Authorization: `Bearer ${token}` } : {}
+  }
+);
 
 
       setUser(res.data.user);
