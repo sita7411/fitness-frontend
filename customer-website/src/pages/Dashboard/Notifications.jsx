@@ -32,15 +32,17 @@ const THEME = "#e3002a";
 export default function FitnessNotifications({ currentUserId }) {
   const [activeTab, setActiveTab] = useState("all");
   const [notifications, setNotifications] = useState([]);
+  const token = localStorage.getItem("user_token");
 
-  // Fetch notifications from backend - FIXED with console.log + safe check
   const fetchNotifications = async () => {
     try {
       console.log("🔄 Fetching notifications for user:", currentUserId); // Debug
-      const { data } = await axios.get(
-        `${API_URL}/api/notifications`,
-        { withCredentials: true }
-      );
+      const { data } = await axios.get(`${API_URL}/api/notifications`, {
+        withCredentials: false,
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("user_token")}`
+        }
+      });
 
       console.log("📥 API Response:", data);
 
@@ -117,7 +119,12 @@ export default function FitnessNotifications({ currentUserId }) {
       await axios.put(
         `${API_URL}/api/notifications/read-all`,
         {},
-        { withCredentials: true }
+        {
+          withCredentials: false,
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("user_token")}`
+          }
+        }
       );
 
       setNotifications((prev) =>
@@ -133,7 +140,12 @@ export default function FitnessNotifications({ currentUserId }) {
     try {
       await axios.delete(
         `${API_URL}/api/notifications/${id}`,
-        { withCredentials: true }
+        {
+          withCredentials: false,
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("user_token")}`
+          }
+        }
       );
 
       setNotifications((prev) => prev.filter((n) => n._id !== id));
