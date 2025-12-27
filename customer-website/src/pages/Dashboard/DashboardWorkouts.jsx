@@ -412,8 +412,10 @@ export default function MyWorkouts() {
       await axios.post(
         `${API_BASE}/programs/${currentProgram.id}/reset-day`,
         { day: currentDay.day },
-        { withCredentials: false }
-      );
+        {
+          withCredentials: false,
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
       setCompletedExercises(prev => prev.filter(id => !currentDay.exercises.map(e => e.id).includes(id)));
       setCurrentIndex(0);
     } catch (err) {
@@ -427,11 +429,10 @@ export default function MyWorkouts() {
 
   async function restartProgram() {
     try {
-      await axios.post(
-        `${API_BASE}/programs/${currentProgram.id}/reset-program`,
-        {},
-        { withCredentials: false }
-      );
+      await axios.post(`${API_BASE}/programs/${currentProgram.id}/reset-program`, {}, {
+        withCredentials: false,
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
       setCompletedExercises([]);
       setSelectedDayIndex(0);
       setCurrentIndex(0);
