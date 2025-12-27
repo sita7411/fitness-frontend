@@ -16,11 +16,14 @@ const iconMap = {
 export default function ContactUs() {
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
-
+  const token = localStorage.getItem("user_token");
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/settings`);
+        const res = await fetch(`${API_URL}/api/settings`, {
+          withCredentials: false,
+          headers: { Authorization: `Bearer ${token}` }
+      });
         if (!res.ok) throw new Error("Failed to load settings");
         const data = await res.json();
         setSettings(data);
