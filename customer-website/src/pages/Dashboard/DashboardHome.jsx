@@ -1,881 +1,1010 @@
-import React, { useRef, useState, useEffect } from "react";
-import axios from "axios";
+import React, { useState, useEffect, useRef } from 'react';
 import {
-  Droplet,
-  Flame,
-  Activity,
-  CheckCircle2,
-  Target,
-  HeartPulse,
-  Dumbbell,
+  Play,
+  Pause,
   Clock,
-  Calendar,
-  Footprints,
-  StretchHorizontal,
-  Users,
   Zap,
-  AlertTriangle,
-} from "lucide-react";
-import { Bar } from "react-chartjs-2";
-import { motion } from "framer-motion";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-} from "chart.js";
+  CheckCircle,
+  Calendar,
+  Trophy,
+  BarChart2,
+  X,
+  Bell,
+  Repeat,
+  RefreshCw,
+} from 'lucide-react';
+import { Progress } from 'antd';
+import { motion, AnimatePresence } from 'framer-motion';
+import confetti from 'canvas-confetti';
+import axios from 'axios';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
+const THEME = '#e3002a';
 
-export default function DashboardHome() {
-  const theme = "#e3002a";
-  const bgLight = "rgba(227,0,42,0.12)";
-  const cardStyle = { boxShadow: "0 6px 18px rgba(0,0,0,0.06)", border: "1px solid rgba(0,0,0,0.05)", height: 165 };
-
-  const [latestSession, setLatestSession] = useState(null);
-  const [sessionLoading, setSessionLoading] = useState(true);
-  const [weeklyData, setWeeklyData] = useState([]);
-  const [todaySchedule, setTodaySchedule] = useState([]);
-  const [scheduleLoading, setScheduleLoading] = useState(true);
-
-  // NEW: Live Recent Activity from Notifications
-  const [recentActivity, setRecentActivity] = useState([]);
-  const [activityLoading, setActivityLoading] = useState(true);
-
-  const [todayStats, setTodayStats] = useState({
-    water: 2.1,
-    calories: 2500,
-    steps: 8200,
-    heartRate: 0,
-    yesterdayCalories: null,
-    dailyGoals: [],
-  });
-  // Mock steps state for realistic default when API gives 0
-  const [mockSteps, setMockSteps] = useState(8200);
-
-  // Random realistic steps when real steps = 0
-  useEffect(() => {
-    if (todayStats.steps === 0) {
-      const base = 7500 + Math.random() * 3000; // 7500–10500 range
-      setMockSteps(Math.floor(base));
-    }
-  }, [todayStats.steps]);
-
-  const displaySteps = todayStats.steps > 0 ? todayStats.steps : mockSteps;
-  // Fetch all data
-  useEffect(() => {
-    const fetchAll = async () => {
-      try {
-        const [weeklyRes, todayRes, sessionRes, scheduleRes, notificationsRes] = await Promise.all([
-          axios.get("/api/stats/weekly", { withCredentials: false }),
-          axios.get("/api/stats/today", { withCredentials: false }),
-          axios.get("/api/stats/latest-session", { withCredentials: false }),
-          axios.get("/api/stats/today-schedule", { withCredentials: false }),
-          axios.get(`${import.meta.env.VITE_API_URL}/api/notifications`, { withCredentials: false }),
-        ]);
-
-        // Weekly Data
-        if (weeklyRes.data?.length === 7) {
-          setWeeklyData(
-            weeklyRes.data.map((d) => ({
-              day: d.day,
-              workoutMinutes: d.workoutMinutes || 0,
-              calories: d.calories || 0,
-              weight: d.weight || 0,
-              steps: d.steps || 0,
-              protein: d.protein || 0,
-              carbs: d.carbs || 0,
-              fats: d.fats || 0,
-            }))
-          );
-        }
-
-        // Today Stats
-        if (todayRes.data) {
-          setTodayStats({
-            water: todayRes.data.water || 0,
-            calories: todayRes.data.calories || 0,
-            steps: todayRes.data.steps || 0,
-            heartRate: todayRes.data.averageHeartRate || 78,
-            yesterdayCalories: todayRes.data.yesterdayCalories,
-            dailyGoals: todayRes.data.dailyGoals || [],
-          });
-        }
-
-        // Latest Session
-        if (sessionRes?.data?.found) {
-          setLatestSession(sessionRes.data);
-        } else {
-          setLatestSession(null);
-        }
-
-        // Today's Schedule
-        if (scheduleRes.data?.success) {
-          setTodaySchedule(scheduleRes.data.schedule || []);
-        } else {
-          setTodaySchedule([]);
-        }
-
-        // Recent Activity - Latest 4 notifications
-        if (notificationsRes.data.success && Array.isArray(notificationsRes.data.notifications)) {
-          const latest = notificationsRes.data.notifications
-            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-            .slice(0, 4);
-          setRecentActivity(latest);
-        } else {
-          setRecentActivity([]);
-        }
-
-        setSessionLoading(false);
-        setScheduleLoading(false);
-        setActivityLoading(false);
-      } catch (err) {
-        console.error("Dashboard fetch error:", err);
-        setTodaySchedule([]);
-        setRecentActivity([]);
-        setSessionLoading(false);
-        setScheduleLoading(false);
-        setActivityLoading(false);
-      }
-    };
-
-    fetchAll();
-  }, []);
-
-  const caloriesData = {
-    labels: weeklyData.map((d) => d.day),
-    datasets: [
-      { label: "Calories", data: weeklyData.map((d) => d.calories), backgroundColor: theme },
-      { label: "Proteins (g)", data: weeklyData.map((d) => d.protein), backgroundColor: "#f7c1c9" },
-      { label: "Fats (g)", data: weeklyData.map((d) => d.fats), backgroundColor: "#e3a500" },
-      { label: "Carbs (g)", data: weeklyData.map((d) => d.carbs), backgroundColor: "#a0d911" },
-    ],
-  };
-
-  const caloriesOptions = {
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: "top",
-        labels: { boxWidth: 12, boxHeight: 12, padding: 15, color: "#374151", font: { size: 12, weight: "500" } },
-      },
-      tooltip: {
-        enabled: true,
-        mode: "index",
-        intersect: false,
-        backgroundColor: "#ffffff",
-        titleColor: "#111827",
-        bodyColor: "#111827",
-        borderColor: "#e3002a",
-        borderWidth: 1,
-        padding: 12,
-        cornerRadius: 8,
-        displayColors: true,
-        boxPadding: 4,
-        caretPadding: 6,
-        callbacks: {
-          title: (items) => `Day: ${items[0].label}`,
-          label: (item) => {
-            const label = item.dataset.label;
-            const value = item.parsed.y;
-            const unit = label === "Calories" ? " kcal" : label.includes("g") ? " g" : "";
-            return `${label}: ${value}${unit}`;
-          },
-        },
-      },
-    },
-    interaction: { mode: "index", intersect: false },
-    scales: {
-      y: { beginAtZero: true, ticks: { color: "#6B7280", font: { size: 12 } }, grid: { color: "#F3F4F6", drawBorder: false } },
-      x: { ticks: { color: "#6B7280", font: { size: 12 } }, grid: { display: false } },
-    },
-  };
-
-  const [hoverInfo, setHoverInfo] = useState(null);
-  const [hoverPos, setHoverPos] = useState({ x: 0, y: 0 });
-  const chartRef = useRef(null);
-
-  const view = { w: 300, h: 120, paddingX: 20, paddingY: 20 };
-  const getX = (idx) => view.paddingX + (idx * (view.w - view.paddingX * 2)) / (weeklyData.length - 1 || 1);
-
-  const getY = (val) => {
-    const minutes = weeklyData.map((d) => d.workoutMinutes || 0);
-    const min = Math.min(...minutes, 0);
-    const max = Math.max(...minutes, 1);
-    const current = val || 0;
-    const pct = max === min ? 0.5 : (current - min) / (max - min);
-    return view.h - view.paddingY - pct * (view.h - view.paddingY * 2);
-  };
-
-  const buildPath = () => {
-    if (!weeklyData.length) return "";
-    const pts = weeklyData.map((d, i) => ({ x: getX(i), y: getY(d.workoutMinutes) }));
-    if (pts.length === 1) return `M ${pts[0].x},${pts[0].y}`;
-    let path = `M ${pts[0].x},${pts[0].y}`;
-    for (let i = 0; i < pts.length - 1; i++) {
-      const p0 = pts[i - 1] || pts[i];
-      const p1 = pts[i];
-      const p2 = pts[i + 1];
-      const p3 = pts[i + 2] || p2;
-      const cp1x = p1.x + (p2.x - p0.x) / 6;
-      const cp1y = p1.y + (p2.y - p0.y) / 6;
-      const cp2x = p2.x - (p3.x - p1.x) / 6;
-      const cp2y = p2.y - (p3.y - p1.y) / 6;
-      path += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${p2.x},${p2.y}`;
-    }
-    return path;
-  };
-  const pathD = buildPath();
-
-  const handlePointEnter = (evt, idx) => {
-    const rect = chartRef.current?.getBoundingClientRect();
-    const x = rect ? evt.clientX - rect.left : evt.clientX;
-    const y = rect ? evt.clientY - rect.top : evt.clientY;
-    setHoverPos({ x, y });
-    setHoverInfo({ idx, ...weeklyData[idx] });
-  };
-  const handlePointMove = (evt) => {
-    const rect = chartRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    setHoverPos({ x: evt.clientX - rect.left, y: evt.clientY - rect.top });
-  };
-  const handlePointLeave = () => setHoverInfo(null);
-
-  const getNotificationIcon = (notif) => {
-    const iconMap = {
-      workout: Dumbbell,
-      success: CheckCircle2,
-      error: AlertTriangle,
-      neutral: Activity,
-      bell: Zap,
-    };
-
-    const Icon = iconMap[notif.icon] || iconMap[notif.type] || Zap;
-
-    return <Icon size={20} className="text-[#e3002a]" />;
-  };
-
+function IconButton({ children, className = '', ...props }) {
   return (
-    <div className="p-5 bg-white w-full rounded-lg">
-      <div className="max-w-6xl mx-auto">
-        {/* TOP 4 CARDS — EXACT SAME */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {/* Water */}
-          <div className="bg-white rounded-xl p-4" style={cardStyle}>
-            <div className="flex justify-between items-center">
-              <p className="text-gray-900 font-semibold text-[15px]">Water</p>
-              <div className="rounded-lg p-2" style={{ background: bgLight }}>
-                <Droplet size={18} color={theme} />
-              </div>
-            </div>
-            <div className="flex items-end gap-1">
-              <h1 className="text-[30px] font-bold text-gray-900 leading-none">{todayStats.water}</h1>
-              <span className="text-gray-500 text-xs mb-[4px]">Liters</span>
-            </div>
-            <div className="mt-2">
-              <svg width="100%" height="42" viewBox="0 0 300 64" preserveAspectRatio="none">
-                <path d="M0 38 C 30 28, 80 46, 120 34 C 150 25, 190 40, 240 34 L300 34 L300 64 L0 64 Z" fill="#ffe5e8" />
-                <path d="M0 38 C 30 28, 80 46, 120 34 C 150 25, 190 40, 240 34" fill="none" stroke={theme} strokeWidth="2.2" strokeLinecap="round" />
-              </svg>
-            </div>
-            <p className="text-[11px] mt-1 text-gray-600 flex items-center gap-1">
-              <span className="px-1.5 py-[2px] rounded-full font-medium" style={{ background: bgLight, color: theme }}>
-                {Math.round((todayStats.water / 3) * 100)}%
-              </span>
-              of 3L goal
-            </p>
+    <button {...props} className={`p-2 rounded-lg hover:bg-gray-100 transition ${className}`}>
+      {children}
+    </button>
+  );
+}
+
+function ProgramCard({ program, active, onClick }) {
+  return (
+    <motion.div
+      layout
+      onClick={onClick}
+      initial={{ opacity: 0.8, y: 10 }}
+      animate={{
+        opacity: active ? 1 : 0.95,
+        scale: active ? 1.03 : 1,
+        y: 0
+      }}
+      transition={{ type: "spring", stiffness: 220, damping: 18 }}
+      className={`w-full rounded-2xl cursor-pointer bg-white shadow-md overflow-hidden transition-all ${active ? 'ring-2 ring-red-600 shadow-[0_0_25px_rgba(227,0,42,0.3)]' : ''}`}
+    >
+      <div className="relative h-48 w-full overflow-hidden rounded-2xl">
+        <img
+          src={program.thumbnail || '/trainer-3.jpg'}
+          alt={program.title}
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent" />
+        <div className="absolute left-4 bottom-4 text-white">
+          <div className="text-xs tracking-wide opacity-90">
+            {program.subtitle}
           </div>
-
-          {/* Calories */}
-          <div className="bg-white rounded-xl p-4" style={cardStyle}>
-            <div className="flex justify-between items-center">
-              <p className="text-gray-900 font-semibold text-[15px]">Calories</p>
-              <div className="rounded-lg p-2" style={{ background: bgLight }}>
-                <Flame size={18} color={theme} />
-              </div>
-            </div>
-            <div className="mt-2 flex items-end gap-1">
-              <h1 className="text-[30px] font-bold text-gray-900 leading-none">
-                {todayStats.calories > 999 ? (todayStats.calories / 1000).toFixed(1) + "K" : todayStats.calories}
-              </h1>
-              <span className="text-gray-500 text-xs mb-[4px]">kcal</span>
-            </div>
-            <div className="flex items-center gap-1 mt-3">
-              {[...Array(6)].map((_, i) => (
-                <div
-                  key={i}
-                  style={{
-                    width: 26,
-                    height: 18,
-                    background: i < Math.ceil(todayStats.calories / 500) ? theme : "#e5e7eb",
-                  }}
-                  className="rounded-md transition-all duration-500"
-                />
-              ))}
-            </div>
-            <p className="text-[11px] mt-3 text-gray-600 flex items-center gap-1">
-              <span
-                className="px-1.5 py-[2px] rounded-full font-medium text-white"
-                style={{
-                  background:
-                    todayStats.yesterdayCalories === null
-                      ? bgLight
-                      : todayStats.calories > todayStats.yesterdayCalories
-                        ? "#10b981"
-                        : "#ef4444",
-                  color: "white",
-                }}
-              >
-                {todayStats.yesterdayCalories === null
-                  ? "New"
-                  : todayStats.calories > todayStats.yesterdayCalories
-                    ? `+${Math.round(((todayStats.calories - todayStats.yesterdayCalories) / todayStats.yesterdayCalories) * 100)}%`
-                    : `${Math.round(((todayStats.calories - todayStats.yesterdayCalories) / todayStats.yesterdayCalories) * 100)}%`}
-              </span>
-              vs yesterday
-            </p>
-          </div>
-
-          {/* Steps */}
-          <div className="bg-white rounded-xl p-4" style={cardStyle}>
-            <div className="flex justify-between items-center">
-              <p className="text-gray-900 font-semibold text-[15px]">Step Goals</p>
-              <div className="rounded-lg p-2" style={{ background: bgLight }}>
-                <Footprints size={18} color={theme} />
-              </div>
-            </div>
-
-            {/* Real steps या mock steps */}
-            <div className="-mt-17 flex justify-center">
-              <svg width="390" height="230" viewBox="0 0 220 120" preserveAspectRatio="xMidYMid meet">
-                {Array.from({ length: 26 }).map((_, idx) => (
-                  <line
-                    key={idx}
-                    x1={110 + 60 * Math.cos(Math.PI + (idx / 26) * Math.PI)}
-                    y1={95 + 60 * Math.sin(Math.PI + (idx / 26) * Math.PI)}
-                    x2={110 + 48 * Math.cos(Math.PI + (idx / 26) * Math.PI)}
-                    y2={95 + 48 * Math.sin(Math.PI + (idx / 26) * Math.PI)}
-                    stroke={idx < Math.round((displaySteps / 15000) * 26) ? theme : "#E5E7EB"}
-                    strokeWidth={4}
-                    strokeLinecap="round"
-                  />
-                ))}
-              </svg>
-            </div>
-
-            <p className="text-center text-[13px] font-semibold -mt-24 text-gray-900">
-              {Math.round((displaySteps / 15000) * 100)}%
-            </p>
-            <p className="text-center text-[11px] text-gray-600">Daily target 15,000</p>
-
-            {/* Bottom text */}
-            <div className="mt-4 text-center">
-              <p className="text-[13px] font-medium text-gray-800">
-                {displaySteps.toLocaleString()} steps
-              </p>
-              <p className="text-[11px] text-gray-500 mt-1">
-                {todayStats.steps > 0
-                  ? "Great job today!"
-                  : "Average person walks ~8,000 steps daily"}
-              </p>
-              {todayStats.steps === 0 && (
-                <p className="text-[10px] text-gray-400 mt-2">
-                  Connect your device for accurate tracking
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Heart Rate */}
-          <div className="bg-white rounded-xl p-4" style={cardStyle}>
-            <div className="flex justify-between items-center">
-              <p className="text-gray-900 font-semibold text-[15px]">Heart Rate</p>
-              <div className="rounded-lg p-2" style={{ background: bgLight }}>
-                <HeartPulse size={18} color={theme} />
-              </div>
-            </div>
-            <div className="mt-2 flex items-end gap-1">
-              <h1 className="text-[30px] font-bold text-gray-900 leading-none">
-                {typeof todayStats.heartRate === "number" ? todayStats.heartRate : 78}
-              </h1>
-              <span className="text-gray-500 text-xs mb-[4px]">BPM</span>
-            </div>
-            <div className="mt-2">
-              <svg width="100%" height="42" viewBox="0 0 300 100" preserveAspectRatio="none">
-                <path d="M0 50 L40 50 L55 30 L70 70 L90 20 L110 80 L145 50 L300 50" stroke={theme} strokeWidth="2.5" fill="none" strokeLinecap="round" />
-              </svg>
-            </div>
-            <p className="text-[11px] mt-1 text-gray-600">
-              {todayStats.heartRate > 100 ? "Post-workout rate" : "Normal resting rate"}
-            </p>
-          </div>
-        </div>
-
-        {/* WEEKLY SUMMARY + GOALS — EXACT SAME */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-10">
-          {/* Weekly Chart */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 lg:col-span-2 min-h-[210px]">
-            <div className="flex justify-between items-center">
-              <h3 className="text-gray-900 font-semibold">Weekly Summary</h3>
-              <p className="text-sm text-gray-600">Hover data points</p>
-            </div>
-
-            <div ref={chartRef} className="relative mt-4" style={{ height: 160 }} onMouseLeave={handlePointLeave}>
-              <svg viewBox={`0 0 ${view.w} ${view.h}`} width="100%" height="160" preserveAspectRatio="none" onMouseMove={handlePointMove}>
-                {[0, 0.25, 0.5, 0.75, 1].map((g, i) => (
-                  <line
-                    key={i}
-                    x1={view.paddingX}
-                    x2={view.w - view.paddingX}
-                    y1={view.paddingY + (1 - g) * (view.h - view.paddingY * 2)}
-                    y2={view.paddingY + (1 - g) * (view.h - view.paddingY * 2)}
-                    stroke="#f3f4f6"
-                    strokeWidth={1}
-                  />
-                ))}
-                {pathD && (
-                  <path
-                    d={`${pathD} L ${view.w - view.paddingX},${view.h - view.paddingY} L ${view.paddingX},${view.h - view.paddingY} Z`}
-                    fill="rgba(227,0,42,0.08)"
-                  />
-                )}
-                <path d={pathD} fill="none" stroke={theme} strokeWidth={2} strokeLinecap="round" />
-                {weeklyData.map((d, i) => {
-                  const cx = getX(i);
-                  const cy = getY(d.workoutMinutes);
-                  return (
-                    <g key={i}>
-                      <circle cx={cx} cy={cy} r={9} fill="transparent" onMouseEnter={(e) => handlePointEnter(e, i)} />
-                      <circle cx={cx} cy={cy} r={4} fill={theme} stroke="white" strokeWidth={1.6} />
-                    </g>
-                  );
-                })}
-                {weeklyData.map((d, i) => (
-                  <text key={i} x={getX(i)} y={view.h - 2} textAnchor="middle" fontSize="9" fill="#6b7280">
-                    {d.day}
-                  </text>
-                ))}
-              </svg>
-
-              {hoverInfo && (
-                <div
-                  className="absolute pointer-events-none z-20 bg-white p-3 border border-gray-200 rounded-lg shadow-md text-xs"
-                  style={{
-                    left: Math.min(Math.max(hoverPos.x - 90, 8), (chartRef.current?.clientWidth || 500) - 180),
-                    top: Math.max(hoverPos.y - 90, 6),
-                    width: 172,
-                  }}
-                >
-                  <div className="flex justify-between">
-                    <p className="text-sm font-semibold text-gray-900">{hoverInfo.day}</p>
-                    <span className="px-2 py-1 text-[11px] rounded-full font-medium" style={{ background: bgLight, color: theme }}>
-                      Workout
-                    </span>
-                  </div>
-                  <div className="mt-2 space-y-1 text-gray-700">
-                    <div className="flex justify-between">
-                      <span>Workout Minutes</span><span className="font-medium">{hoverInfo.workoutMinutes} min</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Calories</span><span className="font-medium">{hoverInfo.calories} kcal</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Weight</span><span className="font-medium">{hoverInfo.weight} kg</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="mt-6 flex justify-between items-center text-sm text-gray-700">
-              <div className="flex flex-col items-center flex-1">
-                <span className="font-bold text-gray-900 text-lg">
-                  {weeklyData.reduce((a, b) => a + b.workoutMinutes, 0)} min
-                </span>
-                <span className="mt-1">Total Workout</span>
-              </div>
-              <div className="flex flex-col items-center flex-1">
-                <span className="font-bold text-gray-900 text-lg">
-                  {Math.round(weeklyData.reduce((a, b) => a + b.calories, 0) / 7)} kcal
-                </span>
-                <span className="mt-1">Avg Calories</span>
-              </div>
-              <div className="flex flex-col items-center flex-1">
-                <span className="font-bold text-gray-900 text-lg">
-                  {(weeklyData.reduce((a, b) => a + b.weight, 0) / 7).toFixed(1)} kg
-                </span>
-                <span className="mt-1">Avg Weight</span>
-              </div>
-              <div className="flex flex-col items-center flex-1">
-                <span className="font-bold text-gray-900 text-lg">Progress</span>
-                <div className="w-full h-2 bg-gray-300 rounded-full mt-1 overflow-hidden">
-                  <div
-                    className="h-2 rounded-full transition-all duration-500"
-                    style={{
-                      width: `${(weeklyData.filter((d) => (d.workoutMinutes || 0) > 0).length / 7) * 100}%`,
-                      background: theme,
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Today's Goals */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 relative overflow-hidden min-h-[210px]">
-            <div className="absolute right-3 top-3 w-28 h-28 rounded-full" style={{ background: "rgba(227,0,42,0.18)" }} />
-            <img src="/dashboard-girl.png" className="absolute -right-7 top-7 w-43" alt="runner" />
-
-            <h3 className="text-gray-900 font-semibold text-[16px] mb-5 relative z-10">Today's Goals</h3>
-
-            {(!todayStats.dailyGoals || todayStats.dailyGoals.length === 0) ? (
-              <div className="space-y-5">
-                <div>
-                  <p className="text-gray-800 text-sm font-medium mb-1">No goals yet</p>
-                  <div className="w-34 h-2 bg-gray-200 rounded-full">
-                    <div className="h-2 rounded-full" style={{ width: "0%", background: "#e3002a" }} />
-                  </div>
-                  <p className="text-[12px] text-gray-500 mt-1">Add from Challenges</p>
-                </div>
-                <div className="text-center pt-4">
-                  <Target size={36} className="mx-auto text-gray-300 mb-2" />
-                  <p className="text-xs text-gray-500">Set your first goal!</p>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-5 relative z-10">
-                {todayStats.dailyGoals.slice(0, 3).map((goal, index) => (
-                  <div key={goal.id}>
-                    <p className={`text-gray-800 text-sm font-medium mb-1 truncate max-w-40 ${goal.completed}`}>
-                      {goal.text.length > 22 ? goal.text.slice(0, 22) + "..." : goal.text}
-                      {goal.completed && " Completed"}
-                    </p>
-                    <div className="w-34 h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: goal.completed ? "100%" : "0%" }}
-                        transition={{ duration: 0.8, ease: "easeOut" }}
-                        className="h-2 rounded-full"
-                        style={{ background: "#e3002a" }}
-                      />
-                    </div>
-                    <p className="text-[12px] text-gray-500 mt-1">
-                      {goal.completed ? "Goal achieved" : "Keep going"}
-                    </p>
-                  </div>
-                ))}
-                {todayStats.dailyGoals.length > 3 && (
-                  <div className="text-center pt-3">
-                    <p className="text-xs text-gray-500 font-medium">
-                      +{todayStats.dailyGoals.length - 3} more goals
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {todayStats.dailyGoals?.length > 0 && (
-              <div className="absolute bottom-3 left-6 right-6">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] text-gray-600">Daily Progress</span>
-                  <span className="px-2 py-1 rounded-full text-xs font-bold text-white" style={{ background: "#e3002a" }}>
-                    {Math.round((todayStats.dailyGoals.filter((g) => g.completed).length / todayStats.dailyGoals.length) * 100)}%
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* CALORIES & NUTRITION + POPULAR COURSE + SCHEDULE — EXACT SAME */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-10">
-          <div className="bg-white p-6 rounded-2xl overflow-hidden shadow-md border border-gray-200">
-            <h4 className="text-md font-medium mb-3">Calories & Nutrition</h4>
-            <div className="w-full h-56">
-              <Bar data={caloriesData} options={caloriesOptions} />
-            </div>
-          </div>
-
-          <div className="relative w-full rounded-2xl overflow-hidden shadow-md border border-gray-200">
-            <div className="absolute inset-0 bg-white/60 backdrop-blur-sm" />
-            <div className="relative z-10 p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "rgba(227,0,42,0.15)" }}>
-                  <span className="text-[#e3002a] text-lg">⚡</span>
-                </div>
-                <p className="text-gray-900 font-semibold text-[14px]">Popular Courses</p>
-              </div>
-              <h2 className="text-[20px] font-bold text-gray-900 leading-snug">Fitness For Beginners</h2>
-              <p className="mt-1 text-[13px] text-gray-700 leading-relaxed">
-                1 Million+ people already joined this course.
-                <span className="text-[#e3002a] font-semibold cursor-pointer"> Learn More</span>
-              </p>
-              <div className="flex items-center gap-1 mt-3">
-                <span className="text-[#e3002a] text-[16px]">★</span>
-                <span className="text-[#e3002a] text-[16px]">★</span>
-                <span className="text-[#e3002a] text-[16px]">★</span>
-                <span className="text-[#e3002a] text-[16px]">★</span>
-                <span className="text-gray-400 text-[16px]">★</span>
-                <span className="text-[12px] text-gray-600 ml-1">(4.0)</span>
-              </div>
-              <div className="flex items-center mt-5">
-                <img src="/trainer-1.jpg" className="w-9 h-9 rounded-full border-2 border-white" />
-                <img src="/trainer-1.jpg" className="w-9 h-9 rounded-full border-2 border-white -ml-3" />
-                <img src="/trainer-1.jpg" className="w-9 h-9 rounded-full border-2 border-white -ml-3" />
-                <img src="/trainer-1.jpg" className="w-9 h-9 rounded-full border-2 border-white -ml-3" />
-                <span className="text-[11px] px-2 py-[2px] rounded-full bg-gray-100 text-gray-700 -ml-2">10k+</span>
-              </div>
-              <div className="flex justify-end -mt-18 -mr-6 -mb-4">
-                <img src="/dumbbells.png" alt="equipment" className="w-34 h-auto object-contain" />
-              </div>
-            </div>
-          </div>
-
-          {/* Today's Schedule */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="text-gray-900 font-semibold text-lg">Today's Schedule</h3>
-              <span className="text-xs font-medium px-3 py-1 rounded-full bg-[#e3002a] text-white">
-                {todaySchedule.length} {todaySchedule.length === 1 ? "Event" : "Events"}
-              </span>
-            </div>
-
-            {scheduleLoading ? (
-              <div className="space-y-3">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-14 bg-gray-100 rounded-xl animate-pulse" />
-                ))}
-              </div>
-            ) : todaySchedule.length === 0 ? (
-              <div className="text-center py-12 text-gray-400">
-                <Calendar size={48} className="mx-auto mb-3 opacity-40" />
-                <p className="font-medium text-gray-500">No workouts scheduled</p>
-                <p className="text-xs mt-1">Add from calendar</p>
-              </div>
-            ) : (
-              <div className="space-y-4 -mt-5">
-                {todaySchedule.map((event, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center gap-4 hover:bg-gray-50 -mx-3 px-3 py-3 rounded-xl transition-all duration-200"
-                  >
-                    <div
-                      className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${event.completed ? "bg-green-100" : "bg-[#e3002a]/10"
-                        }`}
-                    >
-                      {/* Yoga */}
-                      {event.title.toLowerCase().includes("yoga") && (
-                        <StretchHorizontal size={22} className={event.completed ? "text-green-600" : "text-[#e3002a]"} />
-                      )}
-                      {/* Cardio */}
-                      {event.title.toLowerCase().includes("cardio") && (
-                        <Activity size={22} className={event.completed ? "text-green-600" : "text-[#e3002a]"} />
-                      )}
-                      {/* Strength / Gym / Lift */}
-                      {(event.title.toLowerCase().includes("strength") ||
-                        event.title.toLowerCase().includes("gym") ||
-                        event.title.toLowerCase().includes("lift")) && (
-                          <Dumbbell size={22} className={event.completed ? "text-green-600" : "text-[#e3002a]"} />
-                        )}
-                      {/* Core */}
-                      {event.title.toLowerCase().includes("core") && (
-                        <Activity size={22} className={event.completed ? "text-green-600" : "text-[#e3002a]"} />
-                      )}
-                      {/* Program */}
-                      {event.source === "program" && (
-                        <Target size={22} className={event.completed ? "text-green-600" : "text-blue-600"} />
-                      )}
-                      {/* Challenge */}
-                      {event.source === "challenge" && (
-                        <Zap size={22} className={event.completed ? "text-green-600" : "text-purple-600"} />
-                      )}
-                      {/* Class */}
-                      {event.source === "class" && (
-                        <Users size={22} className={event.completed ? "text-green-600" : "text-amber-600"} />
-                      )}
-                      {/* Manual - Explicit check */}
-                      {event.source === "manual" && (
-                        <Dumbbell size={22} className={event.completed ? "text-green-600" : "text-[#e3002a]"} />
-                      )}
-                      {/* Final fallback if nothing matches */}
-                      {!event.title.toLowerCase().includes("yoga") &&
-                        !event.title.toLowerCase().includes("cardio") &&
-                        !event.title.toLowerCase().includes("strength") &&
-                        !event.title.toLowerCase().includes("gym") &&
-                        !event.title.toLowerCase().includes("lift") &&
-                        !event.title.toLowerCase().includes("core") &&
-                        event.source !== "program" &&
-                        event.source !== "challenge" &&
-                        event.source !== "class" &&
-                        event.source !== "manual" && (
-                          <Calendar size={22} className={event.completed ? "text-green-600" : "text-[#e3002a]"} />
-                        )}
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <div className="relative">
-                        <p
-                          className={`font-semibold text-gray-900 truncate pr-6 transition-colors ${event.completed ? "text-gray-400" : ""
-                            }`}
-                        >
-                          {event.title}
-                        </p>
-                      </div>
-                      <p className="text-xs text-gray-500 mt-1">{event.time || "All Day"}</p>
-                    </div>
-
-                    {event.completed && <CheckCircle2 size={22} className="text-green-600 flex-shrink-0" />}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* BOTTOM ROW — EXACT SAME LAYOUT */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_0.8fr] gap-6 mt-8">
-          {/* Active Session */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex flex-col">
-            <div className="flex flex-col sm:flex-row gap-6">
-              <div className="w-full sm:w-1/2 h-80 rounded-xl overflow-hidden shadow-lg bg-gray-50 relative">
-                {latestSession?.thumbnail ? (
-                  <img
-                    src={latestSession.thumbnail}
-                    alt={latestSession.workout}
-                    className="w-full h-full object-cover"
-                    crossOrigin="anonymous"
-                    onError={(e) => {
-                      console.log("Image failed to load:", latestSession.thumbnail);
-                      e.target.style.display = "none";
-                    }}
-                  />
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
-                    <div className="w-20 h-20 bg-gray-200 border-2 border-dashed border-gray-300 rounded-xl mb-3"></div>
-                    <p className="text-sm font-medium">No photo yet</p>
-                    <p className="text-xs mt-1">Complete a workout to see it here</p>
-                  </div>
-                )}
-              </div>
-
-              <div className="w-full sm:w-1/2 flex flex-col justify-center">
-                <h3 className="text-gray-900 font-semibold text-[16px] mb-1">Active Session Summary</h3>
-                <p className="text-gray-600 text-sm mb-4">
-                  {sessionLoading
-                    ? "Loading latest workout..."
-                    : latestSession
-                      ? "Your most recent workout session"
-                      : "No workout completed yet"}
-                </p>
-
-                {sessionLoading ? (
-                  <div className="space-y-3">
-                    {[1, 2, 3, 4].map((i) => (
-                      <div key={i} className="h-4 bg-gray-200 rounded animate-pulse w-48" />
-                    ))}
-                  </div>
-                ) : latestSession ? (
-                  <div className="space-y-4 text-sm">
-                    <div className="flex items-center gap-3">
-                      <Dumbbell size={20} className="text-[#e3002a]" />
-                      <div>
-                        <span className="font-semibold text-gray-800">Workout:</span>
-                        <p className="text-gray-700 font-medium">{latestSession.workout}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Flame size={20} className="text-[#e3002a]" />
-                      <div>
-                        <span className="font-semibold text-gray-800">Calories:</span>
-                        <p className="text-gray-700 font-medium">{latestSession.calories} kcal</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Clock size={20} className="text-[#e3002a]" />
-                      <div>
-                        <span className="font-semibold text-gray-800">Duration:</span>
-                        <p className="text-gray-700 font-medium">{latestSession.duration} min</p>
-                      </div>
-                    </div>
-                    {latestSession.avgHR && (
-                      <div className="flex items-center gap-3">
-                        <HeartPulse size={20} className="text-[#e3002a]" />
-                        <div>
-                          <span className="font-semibold text-gray-800">Avg HR:</span>
-                          <p className="text-gray-700 font-medium">{latestSession.avgHR} bpm</p>
-                        </div>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-3">
-                      <Calendar size={20} className="text-[#e3002a]" />
-                      <div>
-                        <span className="font-semibold text-gray-800">Date:</span>
-                        <p className="text-gray-700 font-medium">{latestSession.date}</p>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    <Dumbbell size={48} className="mx-auto text-gray-300 mb-3" />
-                    <p>Complete a workout to see summary here</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Recent Activity - LIVE FROM NOTIFICATIONS */}
-          <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
-            <h3 className="text-gray-900 font-semibold text-[15px] mb-4">Recent Activity</h3>
-
-            {activityLoading ? (
-              <div className="space-y-4">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse" />
-                    <div className="flex-1">
-                      <div className="h-4 bg-gray-200 rounded animate-pulse w-48 mb-2" />
-                      <div className="h-3 bg-gray-200 rounded animate-pulse w-24" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : recentActivity.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <Activity size={48} className="mx-auto text-gray-300 mb-3" />
-                <p className="font-medium">No recent activity</p>
-                <p className="text-xs mt-1">Your notifications will appear here</p>
-              </div>
-            ) : (
-              <div className="space-y-4 text-[14px]">
-                {recentActivity.map((notif) => {
-                  const IconComponent = getNotificationIcon(notif);
-                  return (
-                    <div key={notif._id} className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-full bg-[#E3000A]/10 flex items-center justify-center flex-shrink-0">
-                        {IconComponent}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-gray-900 font-semibold truncate">{notif.title}</p>
-                        <span className="text-gray-500 text-xs">
-                          {new Date(notif.createdAt).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </span>
-                      </div>
-                      {!notif.isRead && <div className="w-2 h-2 rounded-full bg-[#e3002a] mt-2 flex-shrink-0" />}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+          <div className="text-xl font-semibold leading-snug drop-shadow-md">
+            {program.title}
           </div>
         </div>
       </div>
+      <div className="p-4 bg-white">
+        <div className="text-sm text-gray-500">
+          {program.duration} • {program.level}
+        </div>
+        <div className="mt-4 flex gap-3 text-xs">
+          <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+            <Clock size={14} />
+            {program.duration}
+          </div>
+          <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+            <Zap size={14} />
+            {program.calories}
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+export default function MyWorkouts() {
+  const [programs, setPrograms] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedProgramId, setSelectedProgramId] = useState(null);
+  const [selectedDayIndex, setSelectedDayIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [running, setRunning] = useState(false);
+  const [secondsLeft, setSecondsLeft] = useState(30);
+  const [completedExercises, setCompletedExercises] = useState([]);
+  const [filter, setFilter] = useState('All');
+  const [query, setQuery] = useState('');
+  const [showProgress, setShowProgress] = useState(false);
+  const [showAchievements, setShowAchievements] = useState(false);
+  const [showCompletePopup, setShowCompletePopup] = useState(false);
+  const [heartRate, setHeartRate] = useState("");
+  const [weightInput, setWeightInput] = useState("");
+  const [streak, setStreak] = useState(0);
+  const [reminderEnabled, setReminderEnabled] = useState(false);
+  const [reminderHour, setReminderHour] = useState('18:00');
+  const [weeklyProgress, setWeeklyProgress] = useState([]);
+  const [backendWorkoutMinutes, setBackendWorkoutMinutes] = useState(0);
+  const achievementDefs = {
+    first_ex: { title: 'First Exercise', desc: 'Completed your first exercise' },
+    ten_ex: { title: '10 Exercises', desc: 'Completed 10 exercises' },
+    seven_day_streak: { title: '7 Day Streak', desc: 'Worked out 7 days in a row' }
+  };
+
+  const [achievements, setAchievements] = useState([]);
+  const timerRef = useRef(null);
+  const exerciseListRef = useRef(null);
+
+  const currentProgram = programs.find((p) => p.id === selectedProgramId) || {
+    id: null,
+    title: 'Select a Program',
+    description: 'Click any program card to start',
+    duration: '30-45 min',
+    calories: '300-450 Kal',
+    level: 'Beginner',
+    equipment: [],
+    totalDays: 0,
+    days: [],
+  };
+
+  const days = currentProgram.days || [];
+  const currentDay = days[selectedDayIndex] || { exercises: [], day: 1, title: 'Loading...' };
+  const exercises = currentDay.exercises || [];
+
+  const totalExercisesInCurrentProgram = currentProgram.days?.reduce((acc, day) =>
+    acc + (day.exercises?.length || 0), 0) || 0;
+
+  const completedInCurrentProgram = currentProgram.days?.reduce((acc, day) =>
+    acc + day.exercises.filter(ex => completedExercises.includes(ex.id)).length, 0) || 0;
+
+  const progressPercentage = totalExercisesInCurrentProgram === 0
+    ? 0
+    : Math.round((completedInCurrentProgram / totalExercisesInCurrentProgram) * 100);
+
+  // Helper: Calculate total estimated seconds for the day
+  const calculateDayWorkoutSeconds = () => {
+    return currentDay.exercises.reduce((sum, ex) => {
+      if (ex.type === 'time') return sum + (ex.time || 0);
+      return sum + ((ex.reps || 12) * (ex.sets || 3) * 3); // ~3 sec per rep
+    }, 0);
+  };
+
+  // Fetch today's workout minutes
+  useEffect(() => {
+    const fetchTodayStats = async () => {
+      try {
+        const res = await axios.get(`${API_BASE}/stats/today`, { withCredentials: false });
+        setBackendWorkoutMinutes(res.data.workoutMinutes || 0);
+      } catch (err) {
+        console.log("Could not fetch workout minutes");
+      }
+    };
+    fetchTodayStats();
+  }, []);
+
+  // Load programs
+  useEffect(() => {
+    const loadPrograms = async () => {
+      setLoading(true);
+      try {
+        const res = await axios.get(`${API_BASE}/programs/user`, { withCredentials: false });
+        const transformed = res.data.programs.map((p) => ({
+          id: p.id || p._id,
+          title: p.title,
+          subtitle: `${p.trainingType || 'Full Body'} • ${p.totalDays || 7} days`,
+          description: p.desc || '',
+          duration: p.duration || '30-45 min',
+          calories: `${p.caloriesBurned || 300}-450 Kal`,
+          level: p.difficulty || 'Beginner',
+          thumbnail: p.thumbnail || null,
+          equipment: p.equipment || [],
+          totalDays: p.totalDays || 7,
+          days: (p.days || []).map(d => ({
+            day: d.day || 1,
+            title: d.title || `Day ${d.day}`,
+            exercises: (d.exercises || []).map(ex => ({
+              id: ex.id || ex._id || `ex_${Math.random()}`,
+              title: ex.title,
+              type: ex.type || 'reps',
+              time: ex.time || 30,
+              reps: ex.reps || 12,
+              sets: ex.sets || 3,
+              thumbnail: ex.thumbnail || '/trainer-3.jpg',
+              description: ex.description || ex.notes || '',
+              section: ex.section || 'Workout'
+            }))
+          }))
+        }));
+        setPrograms(transformed);
+        if (transformed.length > 0) {
+          setSelectedProgramId(transformed[0].id);
+        }
+      } catch (err) {
+        console.error('API Error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadPrograms();
+  }, []);
+
+  useEffect(() => {
+    const loadAchievements = async () => {
+      try {
+        const res = await axios.get(`${API_BASE}/programs/achievements`, { withCredentials: false });
+        setAchievements(res.data.unlocked || []);
+      } catch (err) {
+        console.error("Failed to load achievements:", err);
+        setAchievements([]);
+      }
+    };
+
+    loadAchievements();
+  }, []);
+  useEffect(() => {
+    if (!selectedProgramId) return;
+
+    const loadData = async () => {
+      try {
+        const [progressRes, streakRes, weeklyRes] = await Promise.all([
+          axios.get(`${API_BASE}/programs/${selectedProgramId}/progress`, { withCredentials: false }),
+          axios.get(`${API_BASE}/programs/${selectedProgramId}/streak`, { withCredentials: false }),
+          axios.get(`${API_BASE}/stats/weekly`, { withCredentials: false }).catch(() => ({ data: { last7Days: [] } }))
+        ]);
+
+        setCompletedExercises(progressRes.data.completedExercises || []);
+        setStreak(streakRes.data.streak || 0);
+        setWeeklyProgress(weeklyRes.data.last7Days || []);
+      } catch (err) {
+        console.error("Failed to load progress data", err);
+      }
+    };
+
+    loadData();
+  }, [selectedProgramId]);
+
+  // Timer logic
+  useEffect(() => {
+    const ex = exercises[currentIndex];
+    setSecondsLeft(getSecondsForExercise(ex));
+    setRunning(false);
+  }, [currentIndex, selectedDayIndex, exercises]);
+
+  useEffect(() => {
+    if (!running) {
+      if (timerRef.current) clearInterval(timerRef.current);
+      return;
+    }
+    timerRef.current = setInterval(() => {
+      setSecondsLeft((s) => {
+        if (s <= 1) {
+          clearInterval(timerRef.current);
+          finishExercise(true); // auto-complete on timer end
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timerRef.current);
+  }, [running]);
+
+  function getSecondsForExercise(ex) {
+    if (!ex) return 30;
+    if (ex.type === 'time') return ex.time || 30;
+    if (ex.type === 'reps') return (ex.reps || 12) * 2;
+    return 30;
+  }
+
+  function togglePlay() {
+    if (!exercises[currentIndex]) return;
+    setRunning(prev => !prev);
+  }
+
+  async function finishExercise(auto = false) {
+    const ex = exercises[currentIndex];
+    if (!ex || completedExercises.includes(ex.id)) return;
+
+    setRunning(false);
+
+    try {
+      const res = await axios.post(
+        `${API_BASE}/programs/${currentProgram.id}/complete-exercise`,
+        { day: currentDay.day, exerciseId: ex.id },
+        { withCredentials: false }
+      );
+
+      if (res.data.success && !res.data.alreadyCompleted) {
+        setCompletedExercises(prev => Array.from(new Set([...prev, ex.id])));
+
+        // Add estimated minutes for this exercise
+        let timeSpentSeconds = ex.type === 'time' ? ex.time : (ex.reps || 12) * (ex.sets || 3) * 3;
+        const minutes = Math.round(timeSpentSeconds / 60);
+        await axios.post(`${API_BASE}/stats/workout-minutes`, { minutes }, { withCredentials: false })
+          .then(r => setBackendWorkoutMinutes(r.data.workoutMinutes || 0))
+          .catch(() => { });
+
+        // Check if this completes the entire day
+        const updatedCompleted = [...completedExercises, ex.id];
+        const allCompleted = currentDay.exercises.every(e => updatedCompleted.includes(e.id));
+
+        if (allCompleted) {
+          confetti({
+            particleCount: 500,
+            spread: 130,
+            origin: { y: 0.58 },
+            colors: ['#e3002a', '#ff4757', '#ffa502', '#ffdd59', '#2ed573', '#1e90ff', '#ff9ff3'],
+            scalar: 1.3,
+            ticks: 250,
+          });
+
+          // AUTO MARK DAY AS COMPLETE ON BACKEND
+          try {
+            const totalSeconds = calculateDayWorkoutSeconds();
+            const workoutMinutes = Math.round(totalSeconds / 60);
+
+            const dayCompleteRes = await axios.post(
+              `${API_BASE}/programs/${currentProgram.id}/complete-day`,
+              {
+                day: currentDay.day,
+                workoutMinutes,
+                heartRate: null,
+                weight: null,
+              },
+              { withCredentials: false }
+            );
+
+            // Update streak from backend response
+            if (dayCompleteRes.data.streak !== undefined) {
+              setStreak(dayCompleteRes.data.streak);
+
+              // Extra confetti for 7-day streak
+              if (dayCompleteRes.data.streak >= 7) {
+                confetti({
+                  particleCount: 500,
+                  spread: 130,
+                  origin: { y: 0.58 },
+                  colors: ['#e3002a', '#ff4757', '#ffa502', '#ffdd59', '#2ed573', '#1e90ff', '#ff9ff3'],
+                  scalar: 1.3,
+                  ticks: 250,
+                });
+              }
+            }
+          } catch (err) {
+            console.error("Auto day complete failed:", err);
+            // Fallback: popup dikhao taaki user manually save kar sake
+          }
+
+          // Show popup for optional HR/weight entry
+          setShowCompletePopup(true);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to complete exercise", err);
+      alert("Could not save progress. Check your connection.");
+    }
+
+    // Auto-advance logic
+    const nextUnfinished = exercises.findIndex((e, i) => i > currentIndex && !completedExercises.includes(e.id));
+    if (nextUnfinished !== -1) {
+      setCurrentIndex(nextUnfinished);
+      setTimeout(() => {
+        document.getElementById(`exercise-${exercises[nextUnfinished].id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 200);
+    } else if (selectedDayIndex < days.length - 1) {
+      setSelectedDayIndex(selectedDayIndex + 1);
+      setCurrentIndex(0);
+    }
+  }
+  function prevExercise() {
+    setRunning(false);
+    setCurrentIndex(i => Math.max(0, i - 1));
+  }
+
+  function skipExercise() {
+    setRunning(false);
+    const next = currentIndex + 1;
+    if (next < exercises.length) {
+      setCurrentIndex(next);
+    } else if (selectedDayIndex < days.length - 1) {
+      setSelectedDayIndex(selectedDayIndex + 1);
+      setCurrentIndex(0);
+    }
+    // Skip does NOT mark as complete → no minutes added
+  }
+
+  async function repeatDay() {
+    try {
+      await axios.post(
+        `${API_BASE}/programs/${currentProgram.id}/reset-day`,
+        { day: currentDay.day },
+        { withCredentials: false }
+      );
+      setCompletedExercises(prev => prev.filter(id => !currentDay.exercises.map(e => e.id).includes(id)));
+      setCurrentIndex(0);
+    } catch (err) {
+      console.error("Failed to reset day", err);
+      if (confirm("Server reset failed. Reset locally?")) {
+        setCompletedExercises(prev => prev.filter(id => !currentDay.exercises.map(e => e.id).includes(id)));
+        setCurrentIndex(0);
+      }
+    }
+  }
+
+  async function restartProgram() {
+    try {
+      await axios.post(
+        `${API_BASE}/programs/${currentProgram.id}/reset-program`,
+        {},
+        { withCredentials: false }
+      );
+      setCompletedExercises([]);
+      setSelectedDayIndex(0);
+      setCurrentIndex(0);
+    } catch (err) {
+      console.error("Failed to restart program", err);
+      if (confirm("Server reset failed. Reset locally anyway?")) {
+        setCompletedExercises([]);
+        setSelectedDayIndex(0);
+        setCurrentIndex(0);
+      }
+    }
+  }
+
+  const displayExercises = exercises.filter(
+    ex => (filter === 'All' || ex.section === filter) && ex.title.toLowerCase().includes(query.toLowerCase())
+  );
+
+  const isRestDay = displayExercises.length === 0;
+  const minutes = Math.floor(secondsLeft / 60);
+  const secs = secondsLeft % 60;
+
+  function toggleReminder() {
+    setReminderEnabled(v => !v);
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading workouts...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-white p-6 md:p-10 rounded-lg">
+      <div className="max-w-7xl mx-auto space-y-8">
+
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900">My Workouts</h1>
+            <p className="text-sm text-gray-500 mt-1">Premium, focused workout hub — track programs and progress.</p>
+
+            <div className="mt-2 flex items-center gap-3 text-sm text-gray-600">
+              <div className="flex items-center gap-2">
+                <Trophy size={16} color={THEME} />
+                <span>Streak: <strong>{streak}</strong> days</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Clock size={16} color={THEME} />
+                <span>Today: <strong>{backendWorkoutMinutes}</strong>min</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <BarChart2 size={16} color={THEME} />
+                <span>{progressPercentage}% complete</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <IconButton onClick={() => setShowProgress(true)} className="flex items-center gap-2 bg-white border border-gray-100 shadow-sm">
+              <BarChart2 size={16} color={THEME} />
+              <span className="text-sm">Progress</span>
+            </IconButton>
+
+            <IconButton onClick={() => setShowAchievements(true)} className="flex items-center gap-2 bg-white border border-gray-100 shadow-sm">
+              <Trophy size={16} color={THEME} />
+              <span className="text-sm">Achievements</span>
+            </IconButton>
+
+            <IconButton onClick={toggleReminder} className={`flex items-center gap-2 bg-white border border-gray-100 shadow-sm ${reminderEnabled ? '' : 'opacity-60'}`}>
+              <Bell size={16} color={reminderEnabled ? THEME : '#999'} />
+            </IconButton>
+
+            <IconButton onClick={repeatDay} disabled={!currentProgram.id} className={`flex items-center gap-2 bg-white border border-gray-100 shadow-sm ${!currentProgram.id ? 'opacity-50 cursor-not-allowed' : ''}`}>
+              <Repeat size={16} color={THEME} />
+            </IconButton>
+
+            <IconButton onClick={restartProgram} disabled={!currentProgram.id} className={`flex items-center gap-2 bg-white border border-gray-100 shadow-sm ${!currentProgram.id ? 'opacity-50 cursor-not-allowed' : ''}`}>
+              <RefreshCw size={16} color={THEME} />
+            </IconButton>
+          </div>
+        </div>
+
+        {/* Program Cards */}
+        {programs.length === 0 ? (
+          <div className="grid grid-cols-1 gap-4 pb-3">
+            <div className="text-center py-12 bg-white rounded-2xl p-8 border border-gray-100">
+              <CheckCircle size={64} className="mx-auto text-gray-300 mb-4" />
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">No Programs Yet!</h2>
+              <p className="text-gray-500">Your trainer will assign programs soon</p>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pb-3">
+            {programs.map((p) => (
+              <ProgramCard
+                key={p.id}
+                program={p}
+                active={p.id === selectedProgramId}
+                onClick={() => {
+                  setSelectedProgramId(p.id);
+                  setSelectedDayIndex(0);
+                  setCurrentIndex(0);
+                  setQuery('');
+                }}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Program Overview */}
+        <div className="bg-white rounded-2xl p-6 shadow-[0_18px_40px_rgba(14,20,30,0.06)] border border-gray-100">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+            <div className="md:col-span-2">
+              <h2 className="text-2xl font-bold text-gray-900">{currentProgram.title}</h2>
+              <p className="text-gray-600 mt-2">{currentProgram.description}</p>
+              <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
+                <div className="p-3 rounded-lg flex items-center gap-2 border border-gray-100 shadow-sm"><Clock size={16} color={THEME} /> {currentProgram.duration}</div>
+                <div className="p-3 rounded-lg flex items-center gap-2 border border-gray-100 shadow-sm"><Zap size={16} color={THEME} /> {currentProgram.calories}</div>
+                <div className="p-3 rounded-lg flex items-center gap-2 border border-gray-100 shadow-sm"><Calendar size={16} color={THEME} /> {currentProgram.totalDays} days</div>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {currentProgram.equipment?.length > 0 ? (
+                  currentProgram.equipment.map((eq, idx) => (
+                    <span key={idx} className="px-3 py-1 rounded-full bg-gray-50 text-sm text-gray-600 shadow-sm">{eq}</span>
+                  ))
+                ) : (
+                  <span className="px-3 py-1 rounded-full bg-gray-100 text-sm text-gray-500">No equipment needed</span>
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-full">
+                <Progress percent={progressPercentage} status="active" strokeColor={THEME} />
+                <div className="text-sm text-gray-500 mt-2">
+                  {completedInCurrentProgram} / {totalExercisesInCurrentProgram} exercises completed
+                </div>
+              </div>
+              <button onClick={() => setShowProgress(true)} className="w-full py-2 rounded-lg bg-red-600 text-white font-medium" style={{ background: THEME }}>
+                View detailed progress
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Day Selector */}
+        {days.length === 0 ? (
+          <div className="text-center py-8 bg-gray-50 rounded-2xl p-6 border border-gray-100">
+            <p className="text-gray-500">Select a program above to view workout days</p>
+          </div>
+        ) : (
+          <div className="flex gap-3 overflow-x-auto pb-2">
+            {days.map((d, idx) => {
+              const dayExercises = d.exercises || [];
+              const status =
+                dayExercises.length === 0
+                  ? 'rest'
+                  : dayExercises.every((ex) => completedExercises.includes(ex.id))
+                    ? 'completed'
+                    : dayExercises.some((ex) => completedExercises.includes(ex.id))
+                      ? 'in-progress'
+                      : 'pending';
+              const bg =
+                selectedDayIndex === idx
+                  ? 'bg-red-600 text-white'
+                  : status === 'completed'
+                    ? 'bg-green-100 text-green-800 border-green-300'
+                    : status === 'in-progress'
+                      ? 'bg-orange-100 text-orange-800 border-orange-300'
+                      : 'bg-white text-gray-700 border-gray-300';
+
+              return (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    setSelectedDayIndex(idx);
+                    setCurrentIndex(0);
+                    setQuery('');
+                  }}
+                  className={`px-4 py-2 rounded-full shadow-sm border ${bg}`}
+                >
+                  Day {d.day}
+                  {status === 'completed' && <CheckCircle size={14} className="inline ml-2" />}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Filters */}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="flex gap-2">
+            {['All', 'Warm-up', 'Workout', 'Cool-down'].map((s) => (
+              <button
+                key={s}
+                onClick={() => setFilter(s)}
+                className={`px-4 py-2 rounded-full border ${filter === s ? 'bg-red-600 text-white' : 'bg-white'}`}
+                style={filter === s ? { background: THEME } : {}}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search exercises..."
+            className="px-4 py-2 rounded-full border border-gray-200 w-full md:w-80"
+          />
+        </div>
+
+        {/* Main Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+          <main ref={exerciseListRef} className="md:col-span-5 bg-white rounded-2xl p-6 shadow-sm max-h-[640px] overflow-y-auto border border-gray-100">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">Day {currentDay.day} • {currentDay.title}</h3>
+              <div className="text-sm text-gray-500">{displayExercises.length} exercises</div>
+            </div>
+            <div className="space-y-3">
+              {displayExercises.length === 0 && (
+                <div className="py-8 text-center text-gray-500">No exercises — enjoy your rest day!</div>
+              )}
+              {displayExercises.map((ex, idx) => (
+                <motion.div
+                  layout
+                  id={`exercise-${ex.id}`}
+                  key={ex.id}
+                  onClick={() => setCurrentIndex(idx)}
+                  className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer ${exercises[currentIndex]?.id === ex.id ? 'bg-red-50 border-red-200' : 'bg-white border-gray-100'}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-20 h-20 rounded-xl overflow-hidden shadow-sm">
+                      <img src={ex.thumbnail || '/trainer-3.jpg'} alt={ex.title} className="w-full h-full object-cover" />
+                    </div>
+                    <div>
+                      <div className="font-medium text-gray-800 flex items-center gap-2">
+                        {ex.title}
+                        {completedExercises.includes(ex.id) && <CheckCircle size={16} color={THEME} />}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {ex.type === 'time' ? `${ex.time}s` : `${ex.reps} reps × ${ex.sets || 1} sets`}
+                      </div>
+                      <div className="text-xs text-gray-400 mt-1">{ex.description}</div>
+                    </div>
+                  </div>
+                  <div className="text-xs text-gray-400">{ex.section}</div>
+                </motion.div>
+              ))}
+            </div>
+          </main>
+
+          <aside className="md:col-span-7 bg-white rounded-2xl p-6 shadow-sm flex flex-col gap-6 border border-gray-100">
+            <div className="text-center">
+              <div className="text-sm text-gray-500">Current Exercise</div>
+              <div className="text-5xl font-bold text-red-600 mt-2" style={{ color: THEME }}>
+                {String(minutes).padStart(2, '0')}:{String(secs).padStart(2, '0')}
+              </div>
+              <div className="text-xl font-semibold text-gray-800 mt-2">{exercises[currentIndex]?.title || 'Select an exercise'}</div>
+              <div className="text-sm text-gray-500 mt-1">{exercises[currentIndex]?.description}</div>
+            </div>
+
+            {isRestDay ? (
+              <div className="rounded-2xl bg-gray-50 h-80 md:h-96 flex items-center justify-center flex-col shadow-inner">
+                <h2 className="text-2xl font-bold text-gray-700">Rest Day</h2>
+                <p className="text-gray-500 mt-2 text-center">No exercises today — relax and recover!</p>
+              </div>
+            ) : (
+              <div className="rounded-2xl bg-gray-50 h-80 md:h-96 flex items-center justify-center overflow-hidden shadow-inner">
+                <img
+                  src={exercises[currentIndex]?.thumbnail || '/trainer-3.jpg'}
+                  alt="Exercise preview"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+
+            {!isRestDay && (
+              <>
+                <div className="grid grid-cols-3 gap-3">
+                  <button
+                    onClick={togglePlay}
+                    className={`py-3 rounded-full flex items-center justify-center gap-2 font-medium ${running ? 'bg-red-600 text-white' : 'bg-white border border-gray-200'}`}
+                    style={running ? { background: THEME } : {}}
+                  >
+                    {running ? <Pause size={16} /> : <Play size={16} />} {running ? 'Pause' : 'Start'}
+                  </button>
+
+                  <button
+                    onClick={() => finishExercise(false)}
+                    disabled={!exercises[currentIndex] || completedExercises.includes(exercises[currentIndex]?.id)}
+                    className={`py-3 rounded-full font-medium transition-all ${!exercises[currentIndex] || completedExercises.includes(exercises[currentIndex]?.id)
+                      ? 'bg-gray-300 text-white cursor-not-allowed'
+                      : 'bg-red-600 text-white hover:opacity-90 shadow-md'
+                      }`}
+                    style={{
+                      background: !exercises[currentIndex] || completedExercises.includes(exercises[currentIndex]?.id)
+                        ? '#fe758eff'
+                        : THEME
+                    }}
+                  >
+                    {completedExercises.includes(exercises[currentIndex]?.id)
+                      ? 'Completed ✓'
+                      : 'Mark Complete'
+                    }
+                  </button>
+                  <button onClick={skipExercise} className="py-3 rounded-full bg-yellow-500 text-white font-medium">
+                    Skip
+                  </button>
+                </div>
+
+                <div className="flex gap-3">
+                  <button onClick={prevExercise} className="flex-1 py-3 bg-white border border-gray-200 rounded-full">
+                    Previous
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      let nd = selectedDayIndex + 1;
+                      if (nd >= days.length) nd = selectedDayIndex;
+                      setSelectedDayIndex(nd);
+                      setCurrentIndex(0);
+                    }}
+                    className="flex-1 py-3 bg-white border border-gray-200 rounded-full"
+                  >
+                    Next Day
+                  </button>
+                </div>
+              </>
+            )}
+          </aside>
+        </div>
+      </div>
+
+      {/* Progress Modal */}
+      <AnimatePresence>
+        {showProgress && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4"
+            onClick={() => setShowProgress(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.95 }}
+              className="bg-white rounded-2xl w-full max-w-md p-3 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-start">
+                <h3 className="text-xl font-bold">Progress Overview</h3>
+                <button onClick={() => setShowProgress(false)} className="text-gray-500 p-2">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="flex flex-col items-center mt-6">
+                <Progress type="circle" percent={progressPercentage} width={120} strokeColor={THEME} />
+                <div className="text-gray-600 mt-3 text-lg">
+                  {progressPercentage}% completed ({completedInCurrentProgram} / {totalExercisesInCurrentProgram})
+                </div>
+              </div>
+
+              <div className="mt-6 space-y-2">
+                {days.map((d, i) => {
+                  const exs = d.exercises || [];
+                  const completed = exs.filter((ex) => completedExercises.includes(ex.id)).length;
+                  const total = exs.length;
+                  return (
+                    <div key={i} className="flex justify-between text-sm">
+                      <div>Day {d.day} • {d.title}</div>
+                      <div className={completed === total ? 'text-green-600 font-medium' : 'text-gray-500'}>
+                        {completed === total ? 'Completed' : `${completed}/${total}`}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="mt-6">
+                <h4 className="font-semibold mb-2">Last 7 days</h4>
+                <div className="flex gap-2 justify-center">
+                  {weeklyProgress.length > 0 ? weeklyProgress.map((w) => (
+                    <div key={w.day} className="flex flex-col items-center text-xs">
+                      <div className="w-8 h-8 flex items-center justify-center rounded-md bg-gray-100">
+                        {w.count}
+                      </div>
+                      <div className="mt-1 text-gray-400">{new Date(w.day).toLocaleDateString(undefined, { weekday: 'short' })}</div>
+                    </div>
+                  )) : (
+                    <p className="text-gray-500 text-sm">No data yet</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <label className="text-sm text-gray-600">Daily reminder:</label>
+                <div className="flex items-center gap-2 mt-2">
+                  <input type="time" value={reminderHour} onChange={(e) => setReminderHour(e.target.value)} className="px-2 py-1 border rounded" />
+                  <button onClick={toggleReminder} className={`px-3 py-1 rounded ${reminderEnabled ? 'bg-red-600 text-white' : 'bg-gray-200'}`}>
+                    {reminderEnabled ? 'On' : 'Off'}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Day Complete Popup */}
+      <AnimatePresence>
+        {showCompletePopup && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50 px-4"
+          >
+            <motion.div
+              initial={{ y: 40, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 40, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 120, damping: 15 }}
+              className="bg-white rounded-2xl shadow-xl w-full max-w-md p-7 relative overflow-hidden"
+            >
+              <div className="absolute top-0 left-0 w-full h-2" style={{ backgroundColor: "#e3002a" }} />
+
+              <h2 className="text-2xl font-bold text-gray-900 mt-2">
+                Day {currentDay.day} Completed! 🎉
+              </h2>
+
+              <p className="text-gray-600 mt-1 mb-6">
+                Amazing session! Help us track your progress better (both optional).
+              </p>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Average Heart Rate (BPM)
+                </label>
+                <input
+                  type="number"
+                  placeholder="e.g. 135 (optional)"
+                  value={heartRate}
+                  onChange={(e) => setHeartRate(e.target.value)}
+                  className="w-full p-4 border border-gray-300 rounded-xl text-center text-lg shadow-sm focus:border-[#e3002a] focus:ring-2 focus:ring-[#e3002a]/40 outline-none transition"
+                  min="30"
+                  max="250"
+                />
+              </div>
+
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Current Weight (kg)
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  placeholder="e.g. 69.5 (optional)"
+                  value={weightInput || ""}
+                  onChange={(e) => setWeightInput(e.target.value)}
+                  className="w-full p-4 border border-gray-300 rounded-xl text-center text-lg shadow-sm focus:border-[#e3002a] focus:ring-2 focus:ring-[#e3002a]/40 outline-none transition"
+                  min="30"
+                  max="200"
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setHeartRate("");
+                    setWeightInput("");
+                    setShowCompletePopup(false);
+                  }}
+                  className="flex-1 py-3 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-100 transition"
+                >
+                  Skip
+                </button>
+
+                <button
+                  onClick={async () => {
+                    const hr = heartRate.trim() === "" ? null : Number(heartRate);
+                    const wt = weightInput.trim() === "" ? null : Number(weightInput);
+
+                    if (hr !== null && (hr < 30 || hr > 250)) {
+                      alert("Heart rate should be between 30-250 BPM");
+                      return;
+                    }
+                    if (wt !== null && (wt < 30 || wt > 200)) {
+                      alert("Weight should be between 30-200 kg");
+                      return;
+                    }
+
+                    const totalSeconds = calculateDayWorkoutSeconds();
+                    const workoutMinutes = Math.round(totalSeconds / 60);
+
+                    try {
+                      const response = await axios.post(
+                        `${API_BASE}/programs/${currentProgram.id}/complete-day`,
+                        {
+                          day: currentDay.day,
+                          workoutMinutes,
+                          heartRate: hr,
+                          weight: wt,
+                        },
+                        { withCredentials: false }
+                      );
+
+                      if (response.data.streak !== undefined) {
+                        setStreak(response.data.streak);
+                      }
+
+                      if (response.data.streak >= 7) {
+                        confetti({
+                          particleCount: 150,
+                          spread: 70,
+                          origin: { y: 0.6 },
+                          colors: ['#e3002a', '#ff4757', '#ffa502']
+                        });
+                      }
+
+                    } catch (error) {
+                      console.error("Failed to save day completion:", error);
+                      alert("Progress saved locally. Will sync when online.");
+                    } finally {
+                      setHeartRate("");
+                      setWeightInput("");
+                      setShowCompletePopup(false);
+                    }
+                  }}
+                  className="flex-1 py-3 rounded-xl text-white font-semibold shadow-md transition hover:opacity-90"
+                  style={{ backgroundColor: "#e3002a" }}
+                >
+                  Save & Continue
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Achievements Modal */}
+      <AnimatePresence>
+        {showAchievements && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4"
+            onClick={() => setShowAchievements(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.95 }}
+              className="bg-white rounded-2xl w-full max-w-md p-4 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-start">
+                <h3 className="text-xl font-bold">Achievements</h3>
+                <button onClick={() => setShowAchievements(false)} className="text-gray-500 p-2">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="mt-4 grid grid-cols-1 gap-3">
+                {Object.entries(achievementDefs).map(([key, def]) => {
+                  const unlocked = achievements.includes(key);
+                  return (
+                    <div key={key} className={`p-3 rounded-lg border ${unlocked ? 'bg-green-50 border-green-200' : 'bg-white border-gray-100'}`}>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-semibold">{def.title}</div>
+                          <div className="text-xs text-gray-500">{def.desc}</div>
+                        </div>
+                        <div className="text-sm">
+                          {unlocked ? <span className="text-green-600 font-medium">Unlocked</span> : <span className="text-gray-400">Locked</span>}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="mt-4 text-sm text-gray-500">Streak: <strong>{streak}</strong> days</div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
