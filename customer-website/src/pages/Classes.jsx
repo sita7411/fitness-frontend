@@ -23,11 +23,14 @@ const Classes = () => {
   const [selectedClass, setSelectedClass] = useState(null);
   const [loading, setLoading] = useState(true);
   const itemsPerPage = 6;
-
+  const token = localStorage.getItem("user_token");
   const fetchClasses = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API_URL}/api/classes/active`);
+      const res = await axios.get(`${API_URL}/api/classes/active`, {
+        withCredentials: false,
+        headers: { Authorization: `Bearer ${token}` }
+      });
       const filteredClasses = res.data.filter(
         (cls) => cls.status === "Active"
       );
