@@ -8,9 +8,8 @@ import "./index.css";
 
 import axios from "axios";
 
-// ✅ Use ENV based API (local + live)
 axios.defaults.baseURL = import.meta.env.VITE_API_URL;
-axios.defaults.withCredentials = true;
+axios.defaults.withCredentials = false;
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <BrowserRouter>
