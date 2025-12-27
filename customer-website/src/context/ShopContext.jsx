@@ -4,8 +4,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 
 const api = axios.create({
-    baseURL: `${import.meta.env.VITE_API_URL}/api/auth`,
-    withCredentials: true,
+    baseURL: `${import.meta.env.VITE_API_URL}/api/auth`
 });
 
 api.interceptors.request.use((config) => {
