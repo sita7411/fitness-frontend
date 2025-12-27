@@ -30,7 +30,7 @@ export default function MemberLeaderboard({ currentUserId }) {
 
 
                 const res = await axios.get(`${API_BASE}/leaderboard?t=${Date.now()}`, {
-                    withCredentials: true,
+                    withCredentials: false,
                 });
                 const leaderboard = res.data;
 
