@@ -21,6 +21,7 @@ export default function MyProfile() {
     const fetchUser = async () => {
       try {
         const res = await axios.get(`${API_URL}/api/auth/me`, {
+          withCredentials: false
         });
 
         if (res.data.loggedIn) {
@@ -115,7 +116,8 @@ export default function MyProfile() {
     try {
       const res = await axios.put(
         `${API_URL}/api/auth/me`,
-        payload
+        payload,
+        { withCredentials: false }
       );
 
 
