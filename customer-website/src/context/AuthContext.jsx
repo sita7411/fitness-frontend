@@ -10,20 +10,18 @@ export const UserAuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+  withCredentials: false,  // ← Add this line
+});
 
-  // Axios instance (cookie ki zarurat nahi ab)
-  const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL,
-  });
-
-  // Har request mein token automatically add kar do (Bearer header)
-  api.interceptors.request.use((config) => {
-    const token = localStorage.getItem("user_token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  });
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("user_token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
   // ---------------- AUTH CHECK (on app load / refresh) ----------------
   const checkAuth = async () => {
