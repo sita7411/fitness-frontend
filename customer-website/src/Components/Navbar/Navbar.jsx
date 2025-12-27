@@ -8,7 +8,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
-  const [logoUrl, setLogoUrl] = useState("/logo.png"); 
+  const [logoUrl, setLogoUrl] = useState("/logo.png");
   const [loadingLogo, setLoadingLogo] = useState(true);
 
   const location = useLocation();
@@ -20,9 +20,17 @@ const Navbar = () => {
 
   useEffect(() => {
     const fetchLogo = async () => {
+      const token = localStorage.getItem("user_token"); 
+
       try {
+        const headers = {
+          "Content-Type": "application/json",
+          ...(token && { Authorization: `Bearer ${token}` }),
+        };
+
         const res = await fetch(`${API_URL}/api/settings`, {
-          credentials: "include", // Sends cookies automatically
+          method: "GET",
+          headers,
         });
         if (!res.ok) throw new Error("Failed to fetch settings");
 
