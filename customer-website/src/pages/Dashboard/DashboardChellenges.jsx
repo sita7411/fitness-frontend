@@ -118,7 +118,10 @@ export default function DashboardChallenges() {
         const loadGoals = async () => {
             try {
                 setGoalsLoading(true);
-                const res = await axios.get(`${API_BASE}/stats/today-goals`, { withCredentials: false });
+                const res = await axios.get(`${API_BASE}/stats/today-goals`, {
+                    withCredentials: false,
+                    headers: token ? { Authorization: `Bearer ${token}` } : {}
+                });
                 setTodayGoals(res.data.goals || []);
             } catch (err) {
                 console.error("Failed to load goals:", err);
@@ -133,7 +136,10 @@ export default function DashboardChallenges() {
     const addTodayGoal = async () => {
         if (!newGoalText.trim()) return;
         try {
-            const res = await axios.post(`${API_BASE}/stats/add-goal`, { text: newGoalText.trim() }, { withCredentials: false });
+            const res = await axios.post(`${API_BASE}/stats/add-goal`, { text: newGoalText.trim() }, {
+                    withCredentials: false,
+                    headers: token ? { Authorization: `Bearer ${token}` } : {}
+                });
             setTodayGoals(res.data.allGoals);
             setNewGoalText('');
         } catch (err) {
@@ -143,7 +149,10 @@ export default function DashboardChallenges() {
 
     const toggleGoalComplete = async (goalId) => {
         try {
-            const res = await axios.post(`${API_BASE}/stats/toggle-goal`, { goalId }, { withCredentials: false });
+            const res = await axios.post(`${API_BASE}/stats/toggle-goal`, { goalId },{
+                    withCredentials: false,
+                    headers: token ? { Authorization: `Bearer ${token}` } : {}
+                });
 
             if (res.data.allGoals) {
                 setTodayGoals(res.data.allGoals);
@@ -169,8 +178,10 @@ export default function DashboardChallenges() {
             const res = await axios.post(
                 `${API_BASE}/stats/delete-goal`,
                 { goalId },
-                { withCredentials: false }
-            );
+                {
+                    withCredentials: false,
+                    headers: token ? { Authorization: `Bearer ${token}` } : {}
+                });
             setTodayGoals(res.data.allGoals || []);
         } catch (err) {
             console.error("Delete goal error:", err);
