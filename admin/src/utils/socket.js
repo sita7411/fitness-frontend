@@ -9,7 +9,7 @@ export const getSocket = () => {
   if (!socket) {
     socket = io(API_URL, {
       withCredentials: true,
-      transports: ["websocket"], t
+      transports: ["websocket"], 
     });
     console.log("Admin socket instance created");
   }
