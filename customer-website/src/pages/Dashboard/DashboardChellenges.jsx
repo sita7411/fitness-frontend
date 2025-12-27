@@ -1,4 +1,3 @@
-// src/pages/DashboardChallenges.jsx → FULL FINAL VERSION (Backend Synced – No LocalStorage for Progress)
 import React, { useState, useEffect, useRef } from 'react';
 import {
     Play,
@@ -99,7 +98,7 @@ export default function DashboardChallenges() {
     const [newGoalText, setNewGoalText] = useState('');
     const [goalsLoading, setGoalsLoading] = useState(true);
     const [completing, setCompleting] = useState(false);
-
+    const token = localStorage.getItem("user_token");
     // Backend synced states
     const [achievements, setAchievements] = useState([]);
     const [streak, setStreak] = useState(0);
@@ -200,7 +199,10 @@ export default function DashboardChallenges() {
         const loadChallenges = async () => {
             setLoading(true);
             try {
-                const res = await axios.get(`${API_BASE}/challenges/user`, { withCredentials: false });
+                const res = await axios.get(`${API_BASE}/challenges/user`, {
+                    withCredentials: false,
+                    headers: token ? { Authorization: `Bearer ${token}` } : {}
+                });
                 const transformed = (res.data.challenges || []).map((ch) => {
                     const calculatedTotalCalories = (ch.days || []).reduce((sum, day) => {
                         return sum + (day.steps || day.exercises || []).reduce((s, step) => s + (step.calories || 0), 0);
@@ -252,7 +254,10 @@ export default function DashboardChallenges() {
                     setSelectedChallengeId(idToUse);
 
                     try {
-                        const progRes = await axios.get(`${API_BASE}/challenges/${idToUse}/progress`, { withCredentials: false });
+                        const progRes = await axios.get(`${API_BASE}/challenges/${idToUse}/progress`, {
+                            withCredentials: false,
+                            headers: token ? { Authorization: `Bearer ${token}` } : {}
+                        });
                         const prog = progRes.data.progress || {};
                         setCompletedExercises(prog.completedExercises || []);
                         setStreak(prog.streak || 0);
@@ -299,7 +304,10 @@ export default function DashboardChallenges() {
         if (!selectedChallengeId || loading) return;
         const loadProgress = async () => {
             try {
-                const res = await axios.get(`${API_BASE}/challenges/${selectedChallengeId}/progress`, { withCredentials: false });
+                const res = await axios.get(`${API_BASE}/challenges/${selectedChallengeId}/progress`, {
+                    withCredentials: false,
+                    headers: token ? { Authorization: `Bearer ${token}` } : {}
+                });
                 const prog = res.data.progress || {};
                 setCompletedExercises(prog.completedExercises || []);
                 setStreak(prog.streak || 0);
@@ -372,13 +380,20 @@ export default function DashboardChallenges() {
 
         if (!wasCompleted) {
             try {
-                await axios.post(`${API_BASE}/challenges/progress`, {
-                    challengeId,
-                    completedExerciseId: ex.id
-                }, { withCredentials: false });
+                await axios.patch(
+                    `${API_BASE}/challenges/${challengeId}/complete`,
+                    {},
+                    {
+                        withCredentials: false,
+                        headers: token ? { Authorization: `Bearer ${token}` } : {}
+                    }
+                );
 
                 // Refresh latest state from backend
-                const res = await axios.get(`${API_BASE}/challenges/${challengeId}/progress`);
+                const res = await axios.get(`${API_BASE}/challenges/${challengeId}/progress`, {
+                    withCredentials: false,
+                    headers: token ? { Authorization: `Bearer ${token}` } : {}
+                });
                 const updated = res.data.progress || {};
                 setStreak(updated.streak || 0);
                 setLastWorkoutDate(updated.lastCompletedDate ? new Date(updated.lastCompletedDate).toDateString() : null);
@@ -398,7 +413,10 @@ export default function DashboardChallenges() {
             shouldConfetti = true;
             setCompleting(true);
             try {
-                await axios.patch(`${API_BASE}/challenges/${challengeId}/complete`, {}, { withCredentials: false });
+                await axios.patch(`${API_BASE}/challenges/${challengeId}/complete`, {}, {
+                    withCredentials: false,
+                    headers: token ? { Authorization: `Bearer ${token}` } : {}
+                });
                 console.log("✅ Full Challenge Completed & Saved to Backend!");
             } catch (err) {
                 console.error("Challenge complete sync failed:", err);
@@ -448,8 +466,11 @@ export default function DashboardChallenges() {
             await axios.post(`${API_BASE}/challenges/progress`, {
                 challengeId: selectedChallengeId,
                 completedExercises: filtered
-            }, { withCredentials: false });
-            
+            }, {
+                withCredentials: false,
+                headers: token ? { Authorization: `Bearer ${token}` } : {}
+            });
+
         } catch (err) {
             console.error("Repeat day sync failed:", err);
         }
@@ -466,6 +487,9 @@ export default function DashboardChallenges() {
             await axios.post(`${API_BASE}/challenges/progress`, {
                 challengeId: selectedChallengeId,
                 completedExercises: []
+            }, {
+                withCredentials: false,
+                headers: token ? { Authorization: `Bearer ${token}` } : {}
             });
         } catch (err) {
             console.error("Restart sync failed:", err);
@@ -565,7 +589,10 @@ export default function DashboardChallenges() {
 
                                     // Load new challenge progress
                                     try {
-                                        const res = await axios.get(`${API_BASE}/challenges/${c.id}/progress`);
+                                        const res = await axios.get(`${API_BASE}/challenges/${c.id}/progress`, {
+                                            withCredentials: false,
+                                            headers: token ? { Authorization: `Bearer ${token}` } : {}
+                                        });
                                         const prog = res.data.progress || {};
                                         setCompletedExercises(prog.completedExercises || []);
                                         setStreak(prog.streak || 0);
