@@ -440,6 +440,10 @@ const Checkout = () => {
         setIsProcessing(false);
         return;
       }
+       const headers = {
+      "Content-Type": "application/json",
+      ...(token && { Authorization: `Bearer ${token}` }),
+    };
       // SEND TO BACKEND
       await axios.post(`${API_URL}/api/otp/verify`, {
         email: userDetails.email,
