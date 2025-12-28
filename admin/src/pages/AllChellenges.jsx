@@ -55,7 +55,7 @@ export default function AllChallenges() {
   const fetchChallenges = async () => {
     try {
       setLoading(true);
-      const res = await api.get("/api/challenges");
+      const res = await api.get(`/api/challenges`);
       const mapped = res.data.map((c) => ({
         _id: c._id,
         title: c.title || "Untitled",
