@@ -1,10 +1,9 @@
 // src/pages/Admin/AllChallenges.jsx
 import React, { useState, useEffect, useMemo } from "react";
-import axios from "axios";
 import { Edit, Trash2, Eye, X, ChevronDown, Plus, Trash2 as TrashSmall } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-const API_URL = import.meta.env.VITE_API_URL;
+import { useAdminAuth } from "../context/AdminAuthContext";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -39,6 +38,7 @@ const normalizeDay = (day, index) => ({
 });
 
 export default function AllChallenges() {
+  const { api } = useAdminAuth();
   const [challenges, setChallenges] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -55,7 +55,7 @@ export default function AllChallenges() {
   const fetchChallenges = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_URL}/api/challenges`);
+      const res = await api.get("/api/challenges");
       const mapped = res.data.map((c) => ({
         _id: c._id,
         title: c.title || "Untitled",
@@ -110,7 +110,7 @@ export default function AllChallenges() {
 
     if (type === "edit") {
       try {
-        const res = await axios.get(`${API_URL}/api/challenges/${challenge._id}`);
+        const res = await api.get("/api/challenges/${challenge._id}");
         const data = res.data;
 
         setEditChallenge({
@@ -207,8 +207,8 @@ export default function AllChallenges() {
         });
       });
 
-      await axios.put(
-        `${API_URL}/api/challenges/${editChallenge._id}`,
+      await api.put(
+        "/api/challenges/${editChallenge._id}",
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
@@ -225,7 +225,7 @@ export default function AllChallenges() {
   const deleteChallenge = async (_id) => {
     if (!window.confirm("Delete this challenge permanently?")) return;
     try {
-      await axios.delete(`${API_URL}/api/challenges/${_id}`);
+      await api.delete("/api/challenges/${_id}");
       toast.success("Challenge deleted");
       fetchChallenges();
     } catch (err) {
@@ -237,7 +237,7 @@ export default function AllChallenges() {
     const challenge = challenges.find((c) => c._id === _id);
     const newStatus = challenge.status === "Active" ? "Inactive" : "Active";
     try {
-      await axios.patch(`${API_URL}/api/challenges/${_id}/status`, { status: newStatus });
+      await api.patch("/api/challenges/${_id}/status", { status: newStatus });
       setChallenges((prev) => prev.map((c) => (c._id === _id ? { ...c, status: newStatus } : c)));
     } catch (err) {
       toast.error("Status update failed");
