@@ -37,7 +37,7 @@ export default function PaymentsPage() {
     const fetchTransactions = async () => {
         setLoading(true);
         try {
-            const res = await axiosAdmin.get("/admin/revenue/transactions?limit=50");
+            const res = await axiosAdmin.get(`/api/admin/revenue/transactions?limit=50`);
             console.log("Transactions API response:", res.data);
 
             const data = res.data.data.map(t => ({
@@ -62,7 +62,7 @@ export default function PaymentsPage() {
     const fetchMemberships = async () => {
         setLoading(true);
         try {
-            const res = await axiosAdmin.get("/admin/revenue/membership/users?limit=50");
+            const res = await axiosAdmin.get(`/api/admin/revenue/membership/users?limit=50`);
             console.log("Memberships API response:", res.data);
 
             const data = res.data.data.map(m => ({
@@ -86,7 +86,7 @@ export default function PaymentsPage() {
     const fetchRevenuePerformance = async () => {
         setLoading(true);
         try {
-            const res = await axiosAdmin.get("/admin/revenue/performance?period=monthly");
+            const res = await axiosAdmin.get(`/api/admin/revenue/performance?period=monthly`);
             console.log("Revenue performance response:", res.data);
             const monthlyData = res.data.data;
 
@@ -109,7 +109,7 @@ export default function PaymentsPage() {
         } catch (err) {
             // Fallback to last 7 days
             try {
-                const weeklyRes = await axiosAdmin.get("/admin/revenue/last-7-days");
+                const weeklyRes = await axiosAdmin.get(`/api/admin/revenue/last-7-days`);
                 console.log("Last 7 days response:", weeklyRes.data);
 
                 const days = weeklyRes.data.days;
@@ -155,13 +155,39 @@ export default function PaymentsPage() {
     const handleView = (item) => setViewData(item.raw || item);
     const handleCloseView = () => setViewData(null);
 
-    const handleDelete = (id, type) => {
-        if (!window.confirm("Are you sure you want to delete?")) return;
-        if (type === "transactions") setTransactions(prev => prev.filter(t => t.id !== id));
-        if (type === "memberships") setMemberships(prev => prev.filter(m => m.id !== id));
-        toast.success("Deleted locally");
-    };
+    const handleDelete = async (id, type) => {
+        if (!window.confirm("Are you sure you want to delete this record permanently? This action cannot be undone.")) {
+            return;
+        }
 
+        try {
+            let endpoint = "";
+
+            if (type === "transactions") {
+                endpoint = `/api/admin/revenue/transactions/${id}`;
+            } else if (type === "memberships") {
+                endpoint = `/api/admin/revenue/membership/${id}`; // ya jo bhi actual endpoint ho
+            } else {
+                toast.error("Invalid delete type");
+                return;
+            }
+
+            await axiosAdmin.delete(endpoint);
+
+            // Success: remove from local state
+            if (type === "transactions") {
+                setTransactions(prev => prev.filter(t => t.id !== id));
+            } else if (type === "memberships") {
+                setMemberships(prev => prev.filter(m => m.id !== id));
+            }
+
+            toast.success("Record deleted successfully!");
+        } catch (err) {
+            console.error("Delete error:", err);
+            const message = err.response?.data?.message || "Failed to delete record";
+            toast.error(message);
+        }
+    };
     const handleDownloadInvoice = async (invoice) => {
         const doc = new jsPDF("p", "pt", "a4");
         const pageWidth = doc.internal.pageSize.getWidth();
@@ -368,11 +394,10 @@ export default function PaymentsPage() {
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`px-5 py-2 rounded-lg font-semibold flex items-center gap-2 transition ${
-                            activeTab === tab.id
+                        className={`px-5 py-2 rounded-lg font-semibold flex items-center gap-2 transition ${activeTab === tab.id
                                 ? "bg-white shadow-md text-gray-900 border-b-2 border-red-600"
                                 : "text-gray-500 hover:text-gray-900 hover:bg-gray-100"
-                        }`}
+                            }`}
                     >
                         <tab.icon size={18} /> {tab.label}
                     </button>
