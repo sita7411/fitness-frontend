@@ -14,9 +14,9 @@ import {
 } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom"; 
 
-const API_URL = import.meta.env.VITE_API_URL;
+import { useAdminAuth } from "../context/AdminAuthContext";
 
 const apiCall = async (endpoint, options = {}) => {
   let fullEndpoint = endpoint;
@@ -56,6 +56,7 @@ const apiCall = async (endpoint, options = {}) => {
 };
 
 export default function AdminMyAccount() {
+  const { api } = useAdminAuth();
   const [admin, setAdmin] = useState(null);
   const [avatar, setAvatar] = useState(null);
   const [passwords, setPasswords] = useState({ currentPassword: "", newPassword: "" });
@@ -70,7 +71,7 @@ export default function AdminMyAccount() {
   const fetchAdmin = async () => {
     try {
       setLoading(true);
-      const response = await apiCall("/me");
+      const response = await api.get(`/admin/me`);
       setAdmin(response.user);
       setAvatar(response.user?.avatar || null);
     } catch (err) {
@@ -95,11 +96,8 @@ export default function AdminMyAccount() {
       formData.append("email", admin.email);
       formData.append("phone", admin.phone || "");
 
-      const response = await fetch(`${API_URL}/api/me`, {
-        method: "PUT",
-        credentials: "include",
-        body: formData,
-      });
+      const response = await api.put(`/admin/me`, formData);
+
 
       if (!response.ok) {
         const error = await response.json().catch(() => ({}));
@@ -126,10 +124,7 @@ export default function AdminMyAccount() {
     }
     setChangingPassword(true);
     try {
-      await apiCall("/password", {
-        method: "PUT",
-        body: JSON.stringify(passwords),
-      });
+      await api.put(`/admin/password`, passwords);
       toast.success("Password updated!");
       setPasswords({ currentPassword: "", newPassword: "" });
     } catch (err) {
@@ -142,8 +137,8 @@ export default function AdminMyAccount() {
   const handleLogout = async () => {
     if (!confirm("Logout?")) return;
     try {
-      await apiCall("/admin/logout", { method: "POST" });  // ← yeh change karo
-      navigate("/login");
+      await api.post(`/admin/logout`);
+       navigate("/login");
     } catch (err) {
       navigate("/login");
     }
