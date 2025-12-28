@@ -4,9 +4,9 @@ import { CheckIcon, Trash2, Edit, PlusIcon, X } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000/api/memberships";
-
+import { useAdminAuth } from "../context/AdminAuthContext";
 const MembershipsPage = () => {
+  const { api } = useAdminAuth();
   const [memberships, setMemberships] = useState([]);
   const [tab, setTab] = useState("all");
   const [editingMembership, setEditingMembership] = useState(null);
@@ -18,13 +18,13 @@ const MembershipsPage = () => {
     duration: "",
     features: [""],
     popular: false,
-    plans: [], 
+    plans: [],
   });
 
   // Fetch memberships
   const fetchMemberships = async () => {
     try {
-      const res = await axios.get(API_BASE);
+      const res = await api.get(`/api/memberships`);
       setMemberships(res.data);
     } catch (err) {
       console.error(err);
@@ -57,7 +57,7 @@ const MembershipsPage = () => {
       duration: membership.duration,
       features: membership.features.length ? membership.features : [""],
       popular: membership.popular,
-      plans: membership.plans || [], 
+      plans: membership.plans || [],
     });
     setTab("form");
   };
@@ -72,14 +72,14 @@ const MembershipsPage = () => {
         duration: form.duration.trim(),
         features: form.features.filter((f) => f.trim() !== ""),
         popular: form.popular,
-        plans: form.plans, 
+        plans: form.plans,
       };
 
       if (editingMembership) {
-        await axios.put(`${API_BASE}/${editingMembership._id}`, payload);
+        await api.put(`/api/memberships/${editingMembership._id}`, payload);
         toast.success("Membership updated successfully!");
       } else {
-        await axios.post(API_BASE, payload);
+        await api.post(`/api/memberships`, payload);
         toast.success("Membership created successfully!");
       }
 
@@ -96,9 +96,10 @@ const MembershipsPage = () => {
   };
 
   const handleDelete = async (id) => {
+
     if (!window.confirm("Are you sure you want to delete this membership?")) return;
     try {
-      await axios.delete(`${API_BASE}/${id}`);
+      await api.delete(`/api/memberships/${id}`);
       fetchMemberships();
       toast.success("Membership deleted successfully!");
     } catch (err) {
@@ -263,19 +264,19 @@ const MembershipsPage = () => {
               <p className="text-sm text-gray-600 mb-4">Select which plans this membership can access:</p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <label className="flex items-center gap-3 p-4 bg-white rounded-xl border-2 border-gray-200 hover:border-blue-300 transition-all cursor-pointer group">
-                  <input 
-                    type="checkbox" 
-                    checked={form.plans.includes("Basic")} 
+                  <input
+                    type="checkbox"
+                    checked={form.plans.includes("Basic")}
                     onChange={(e) => {
                       const checked = e.target.checked;
                       setForm(prev => ({
                         ...prev,
-                        plans: checked 
+                        plans: checked
                           ? [...prev.plans.filter(p => p !== "Basic"), "Basic"]
                           : prev.plans.filter(p => p !== "Basic")
                       }));
-                    }} 
-                    className="w-5 h-5 text-[#e3002a] border-gray-300 rounded focus:ring-[#e3002a] group-hover:scale-110 transition-transform" 
+                    }}
+                    className="w-5 h-5 text-[#e3002a] border-gray-300 rounded focus:ring-[#e3002a] group-hover:scale-110 transition-transform"
                   />
                   <div>
                     <div className="font-semibold text-gray-900">Basic</div>
@@ -284,19 +285,19 @@ const MembershipsPage = () => {
                 </label>
 
                 <label className="flex items-center gap-3 p-4 bg-white rounded-xl border-2 border-gray-200 hover:border-blue-300 transition-all cursor-pointer group">
-                  <input 
-                    type="checkbox" 
-                    checked={form.plans.includes("Premium")} 
+                  <input
+                    type="checkbox"
+                    checked={form.plans.includes("Premium")}
                     onChange={(e) => {
                       const checked = e.target.checked;
                       setForm(prev => ({
                         ...prev,
-                        plans: checked 
+                        plans: checked
                           ? [...prev.plans.filter(p => p !== "Premium"), "Premium"]
                           : prev.plans.filter(p => p !== "Premium")
                       }));
-                    }} 
-                    className="w-5 h-5 text-[#e3002a] border-gray-300 rounded focus:ring-[#e3002a] group-hover:scale-110 transition-transform" 
+                    }}
+                    className="w-5 h-5 text-[#e3002a] border-gray-300 rounded focus:ring-[#e3002a] group-hover:scale-110 transition-transform"
                   />
                   <div>
                     <div className="font-semibold text-gray-900">Premium</div>
@@ -305,19 +306,19 @@ const MembershipsPage = () => {
                 </label>
 
                 <label className="flex items-center gap-3 p-4 bg-white rounded-xl border-2 border-gray-200 hover:border-blue-300 transition-all cursor-pointer group">
-                  <input 
-                    type="checkbox" 
-                    checked={form.plans.includes("Pro")} 
+                  <input
+                    type="checkbox"
+                    checked={form.plans.includes("Pro")}
                     onChange={(e) => {
                       const checked = e.target.checked;
                       setForm(prev => ({
                         ...prev,
-                        plans: checked 
+                        plans: checked
                           ? [...prev.plans.filter(p => p !== "Pro"), "Pro"]
                           : prev.plans.filter(p => p !== "Pro")
                       }));
-                    }} 
-                    className="w-5 h-5 text-[#e3002a] border-gray-300 rounded focus:ring-[#e3002a] group-hover:scale-110 transition-transform" 
+                    }}
+                    className="w-5 h-5 text-[#e3002a] border-gray-300 rounded focus:ring-[#e3002a] group-hover:scale-110 transition-transform"
                   />
                   <div>
                     <div className="font-semibold text-gray-900">Pro</div>
@@ -344,9 +345,9 @@ const MembershipsPage = () => {
                       className="flex-1 border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#e3002a] focus:border-transparent"
                     />
                     {form.features.length > 1 && (
-                      <button 
-                        type="button" 
-                        onClick={() => removeFeature(idx)} 
+                      <button
+                        type="button"
+                        onClick={() => removeFeature(idx)}
                         className="w-12 h-12 bg-red-100 text-red-600 hover:bg-red-200 rounded-xl flex items-center justify-center transition-all hover:scale-105"
                       >
                         <X className="w-5 h-5" />
@@ -354,9 +355,9 @@ const MembershipsPage = () => {
                     )}
                   </div>
                 ))}
-                <button 
-                  type="button" 
-                  onClick={addFeature} 
+                <button
+                  type="button"
+                  onClick={addFeature}
                   className="flex items-center gap-2 text-[#e3002a] font-semibold hover:text-red-700 transition-all"
                 >
                   <PlusIcon className="w-4 h-4" /> Add Feature
@@ -365,12 +366,12 @@ const MembershipsPage = () => {
             </div>
 
             <div className="flex items-center gap-3 p-4 bg-yellow-50 border-2 border-yellow-200 rounded-xl">
-              <input 
-                type="checkbox" 
-                name="popular" 
-                checked={form.popular} 
-                onChange={handleChange} 
-                className="w-5 h-5 text-[#e3002a] border-yellow-300 rounded focus:ring-[#e3002a]" 
+              <input
+                type="checkbox"
+                name="popular"
+                checked={form.popular}
+                onChange={handleChange}
+                className="w-5 h-5 text-[#e3002a] border-yellow-300 rounded focus:ring-[#e3002a]"
               />
               <label className="text-gray-700 font-semibold">
                 ⭐ Make this a Popular Plan (Shows badge on frontend)
@@ -378,16 +379,16 @@ const MembershipsPage = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <button 
-                type="submit" 
-                disabled={loading} 
+              <button
+                type="submit"
+                disabled={loading}
                 className="flex-1 bg-gradient-to-r from-[#e3002a] to-red-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
                 {loading ? "Saving..." : editingMembership ? "Update Membership" : "Create Membership"}
               </button>
-              <button 
-                type="button" 
-                onClick={() => { setTab("all"); setEditingMembership(null); }} 
+              <button
+                type="button"
+                onClick={() => { setTab("all"); setEditingMembership(null); }}
                 className="flex-1 bg-gray-200 text-gray-700 py-4 rounded-xl font-semibold hover:bg-gray-300 transition-all"
               >
                 Cancel
