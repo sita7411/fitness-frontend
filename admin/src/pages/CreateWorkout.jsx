@@ -13,8 +13,7 @@ import {
 } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-const API_URL = import.meta.env.VITE_API_URL;
-
+import { useAdminAuth } from "../context/AdminAuthContext";
 const THEME = "#e3002a";
 const LIGHT_BORDER = "#e5e7eb";
 const LIGHT_SHADOW = "0 4px 16px rgba(0,0,0,0.05)";
@@ -279,6 +278,7 @@ const DayCard = ({
 
 // ------------------ Main Component ------------------
 export default function CreateWorkout() {
+    const { api } = useAdminAuth();
     const [workout, setWorkout] = useState(() => ({
         id: uid(),
         title: "",
@@ -434,74 +434,67 @@ export default function CreateWorkout() {
 
     // --------------- Save Program ----------------
     const handleSave = async () => {
-        const error = validateWorkout();
-        if (error) return toast.error(error);
+  const error = validateWorkout();
+  if (error) return toast.error(error);
 
-        try {
-            const formData = new FormData();
+  try {
+    const formData = new FormData();
 
-            // 1. Main thumbnail
-            if (workout.thumbnail?.file) {
-                formData.append("thumbnail", workout.thumbnail.file);
-            }
+    // 1. Main thumbnail
+    if (workout.thumbnail?.file) {
+      formData.append("thumbnail", workout.thumbnail.file);
+    }
 
-            // 2. Exercise thumbnails
-            workout.days.forEach((day) => {
-                day.exercises.forEach((ex) => {
-                    if (ex.thumbnail?.file) {
-                        formData.append(`exercise-${ex.id}`, ex.thumbnail.file);
-                    }
-                });
-            });
-
-            // 3. Program data
-            const programData = {
-                id: workout.id,
-                title: workout.title.trim(),
-                description: workout.description.trim(),
-                duration: workout.duration,
-                level: workout.level,
-                trainingType: workout.trainingType,
-                focus: workout.focus,
-                equipment: workout.equipment,
-                price: Number(workout.price) || 0,
-                trainerName: workout.trainerName?.trim() || "",
-                caloriesBurned: Number(workout.caloriesBurned) || 0,
-                plans: workout.plans || [], // ← YEH ZAROORI
-                days: workout.days.map((d) => ({
-                    title: d.title,
-                    exercises: d.exercises.map((ex) => ({
-                        id: ex.id,
-                        title: ex.title.trim(),
-                        type: ex.type,
-                        time: ex.time || 0,
-                        reps: ex.reps || 0,
-                        sets: ex.sets || 0,
-                        section: ex.section || "Workout",
-                        notes: ex.notes?.trim() || "",
-                        thumbnail: ex.thumbnail?.url || null,
-                    })),
-                })),
-            };
-
-            formData.append("program", JSON.stringify(programData));
-
-            const res = await fetch(`${API_URL}/api/programs`, {
-                method: "POST",
-                body: formData,
-                credentials: "include",
-            });
-
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.message || "Failed");
-
-            toast.success("Program saved successfully!");
-            console.log("Saved program:", data);
-        } catch (err) {
-            toast.error(err.message || "Save failed");
-            console.error(err);
+    // 2. Exercise thumbnails — IMPORTANT: Use index-based naming (not id!)
+    workout.days.forEach((day, dayIndex) => {
+      day.exercises.forEach((ex, exIndex) => {
+        if (ex.thumbnail?.file) {
+          formData.append(`exercise_${dayIndex}_${exIndex}`, ex.thumbnail.file);
         }
+      });
+    });
+
+    // 3. Clean program data (no frontend IDs, no file objects)
+    const programData = {
+      title: workout.title.trim(),
+      description: workout.description.trim(),
+      duration: workout.duration,
+      level: workout.level,
+      trainingType: workout.trainingType,
+      focus: workout.focus,
+      equipment: workout.equipment || [],
+      price: Number(workout.price) || 0,
+      trainerName: workout.trainerName?.trim() || "",
+      caloriesBurned: Number(workout.caloriesBurned) || 0,
+      plans: workout.plans || [],
+      days: workout.days.map((day) => ({
+        title: day.title.trim(),
+        exercises: day.exercises.map((ex) => ({
+          title: ex.title.trim() || "Untitled Exercise",
+          type: ex.type || "time",
+          time: ex.type === "time" ? Number(ex.time) || 30 : undefined,
+          reps: ex.type === "reps" ? Number(ex.reps) || 12 : undefined,
+          sets: ex.type === "reps" ? Number(ex.sets) || 3 : undefined,
+          section: ex.section || "Workout",
+          notes: ex.notes?.trim() || "",
+        })),
+      })),
     };
+
+    formData.append("program", JSON.stringify(programData));
+
+    const res = await api.post(`/api/programs`, formData);
+
+    toast.success("Workout program saved successfully!");
+    console.log("Saved:", res.data);
+
+
+  } catch (err) {
+    console.error("Save error:", err);
+    const message = err.response?.data?.message || "Failed to save program";
+    toast.error(message);
+  }
+};
 
     const totalExercises = useMemo(() => workout.days.reduce((s, d) => s + d.exercises.length, 0), [workout]);
 
