@@ -88,21 +88,25 @@ function WaterTracker({ value, setCups }) {
   const cupsTotal = 8;
   const mlPerCup = 240;
   const filled = Math.max(0, Math.min(cupsTotal, value));
+  const token = localStorage.getItem("user_token");
 
   const updateWater = async (increment) => {
     try {
+      const headers = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      };
+
       await axios.post(
         `${API_URL}/api/stats/water`,
         { increment },
-        {
-          withCredentials: false,
-          headers: { Authorization: `Bearer ${token}` }
-        }
+        { headers }
       );
 
       setCups((prev) => prev + increment);
       toast.success(increment > 0 ? "+1 Glass Added" : "Glass Removed");
     } catch (err) {
+      console.error("Water update error:", err.response?.data || err);
       toast.error("Water update failed");
     }
   };
