@@ -1,5 +1,4 @@
 import React, { useState, useMemo, useEffect } from "react";
-import axios from "axios"; // ← Still imported but NOT used directly anymore
 import {
   startOfMonth,
   endOfMonth,
@@ -150,7 +149,7 @@ const EventCard = ({ ev, onClick }) => {
 };
 
 export default function AdminSchedule() {
-  const { admin, api } = useAdminAuth(); // ← Use api from context
+  const { admin, api } = useAdminAuth(); 
 
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [events, setEvents] = useState([]);
@@ -164,7 +163,7 @@ export default function AdminSchedule() {
   // Fetch all users
   const fetchUsers = async () => {
     try {
-      const res = await api.get("/admin/users");
+      const res = await api.get(`/api/admin/users`);
       if (res.data.success) {
         const normalized = res.data.users.map((u) => ({
           ...u,
@@ -199,7 +198,7 @@ export default function AdminSchedule() {
         const params = { month };
         if (selectedUser !== null) params.userId = selectedUser;
 
-        const res = await api.get("/schedule/admin", { params });
+        const res = await api.get(`/api/schedule/admin`, { params });
 
         if (res.data.success) {
           setEvents(res.data.events || []);
@@ -239,12 +238,12 @@ export default function AdminSchedule() {
 
     try {
       if (selectedEvent) {
-        const res = await api.put(`/schedule/${selectedEvent._id}`, newEvent);
+        const res = await api.put(`/api/schedule/${selectedEvent._id}`, newEvent);
         setEvents((prev) =>
           prev.map((ev) => (ev._id === selectedEvent._id ? res.data.event : ev))
         );
       } else {
-        const res = await api.post("/schedule", {
+        const res = await api.post(`/api/schedule`, {
           ...newEvent,
           date: format(selectedDate, "yyyy-MM-dd"),
         });
@@ -260,7 +259,7 @@ export default function AdminSchedule() {
   const handleDelete = async (id) => {
     if (!confirm("Delete this workout?")) return;
     try {
-      await api.delete(`/schedule/${id}`);
+      await api.delete(`/api/schedule/${id}`);
       setEvents((prev) => prev.filter((ev) => ev._id !== id));
       closeModal();
     } catch (err) {
