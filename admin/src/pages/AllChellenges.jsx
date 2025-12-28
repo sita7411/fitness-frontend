@@ -110,7 +110,7 @@ export default function AllChallenges() {
 
     if (type === "edit") {
       try {
-        const res = await api.get("/api/challenges/${challenge._id}");
+        const res = await api.get(`/api/challenges/${challenge._id}`);
         const data = res.data;
 
         setEditChallenge({
