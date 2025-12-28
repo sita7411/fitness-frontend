@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-const API_URL = import.meta.env.VITE_API_URL;
+import { useAdminAuth } from "../context/AdminAuthContext";
 const THEME = "#e3002a";
 const LIGHT_BORDER = "#e5e7eb";
 const LIGHT_SHADOW = "0 4px 16px rgba(0,0,0,0.05)";
@@ -308,6 +308,7 @@ const ClassCard = ({
    Main Component
 ------------------------------------------*/
 export default function CreateClasses() {
+    const { api } = useAdminAuth();
     const [classes, setClasses] = useState({
         title: "",
         description: "",
@@ -410,80 +411,70 @@ export default function CreateClasses() {
 
     const handleSave = async () => {
         if (!classes.title.trim()) {
-            toast.error("Enter program title");
+            toast.error("Enter class title!");
             return;
         }
 
-        const formData = new FormData();
-
-        // Main thumbnail
-        if (classes.thumbnail?.file) {
-            formData.append("thumbnail", classes.thumbnail.file);
-        }
-
-        // Exercise thumbnails with INDEX (not ID)
-        classes.classList.forEach((day, dayIndex) => {
-            day.exercises.forEach((ex, exIndex) => {
-                if (ex.thumbnail?.file) {
-                    const fieldName = `exercise_${dayIndex}_${exIndex}`;
-                    formData.append(fieldName, ex.thumbnail.file);
-                }
-            });
-        });
-
-        // Clean payload - NO frontend IDs
-        const payload = {
-            title: classes.title.trim(),
-            description: classes.description || "",
-            duration: classes.duration || "30 – 45 min",
-            level: classes.level || "Beginner",
-            price: Number(classes.price) || 0,
-            trainerName: classes.trainerName || "",
-            status: classes.status || "Active",
-            caloriesBurned: classes.caloriesBurned || "0 kcal",
-            plans: classes.plans || [],
-            equipment: classes.equipment || [],
-            date: classes.date || null,
-            time: classes.time || "",
-            days: classes.classList.map((day) => ({
-                title: day.title || "Day 1",
-                exercises: day.exercises.map((ex) => ({
-                    title: ex.title || "New Exercise",
-                    type: ex.type || "time",
-                    time: ex.time != null ? ex.time : null,
-                    reps: ex.reps != null ? ex.reps : null,
-                    sets: ex.sets != null ? ex.sets : null,
-                    notes: ex.notes || "",
-                    section: ex.section || "Workout",
-                })),
-            })),
-        };
-
-        formData.append("data", JSON.stringify(payload));
-
         try {
-            const token = localStorage.getItem("token");
-            const res = await fetch(`${API_URL}/api/classes`, {
-                method: "POST",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    // Content-Type mat set karo FormData ke saath
-                },
-                body: formData,
+            const formData = new FormData();
+
+            // Main thumbnail
+            if (classes.thumbnail?.file) {
+                formData.append("thumbnail", classes.thumbnail.file);
+            }
+
+            // Exercise thumbnails (index-based naming – backend expects this)
+            classes.classList.forEach((day, dayIndex) => {
+                day.exercises.forEach((ex, exIndex) => {
+                    if (ex.thumbnail?.file) {
+                        formData.append(`exercise_${dayIndex}_${exIndex}`, ex.thumbnail.file);
+                    }
+                });
             });
 
-            const result = await res.json();
-            console.log("Response:", res.status, result);
+            // Clean payload (no frontend IDs)
+            const payload = {
+                title: classes.title.trim(),
+                description: classes.description || "",
+                duration: classes.duration || "30 – 45 min",
+                level: classes.level || "Beginner",
+                price: Number(classes.price) || 0,
+                trainerName: classes.trainerName || "",
+                status: classes.status || "Active",
+                caloriesBurned: classes.caloriesBurned || "0 kcal",
+                plans: classes.plans || [],
+                equipment: classes.equipment || [],
+                date: classes.date || null,
+                time: classes.time || "",
+                days: classes.classList.map((day) => ({
+                    title: day.title || `Day ${day.id}`,
+                    exercises: day.exercises.map((ex) => ({
+                        title: ex.title || "Untitled Exercise",
+                        type: ex.type || "time",
+                        time: ex.type === "time" ? Number(ex.time) || 30 : undefined,
+                        reps: ex.type === "reps" ? Number(ex.reps) || 12 : undefined,
+                        sets: ex.type === "reps" ? Number(ex.sets) || 3 : undefined,
+                        notes: ex.notes || "",
+                        section: ex.section || "Workout",
+                    })),
+                })),
+            };
 
-            if (res.ok) {
-                toast.success("Class saved successfully!");
-                setTimeout(() => window.location.reload(), 1500);
-            } else {
-                toast.error(result.message || "Save failed");
-            }
+            formData.append("data", JSON.stringify(payload));
+
+            // Axios with auth token + proper FormData handling
+            const res = await api.post(`/api/classes`, formData);
+
+            toast.success("Class created successfully!");
+            console.log("Success:", res.data);
+
+            // Optional: reload ya redirect
+            setTimeout(() => window.location.reload(), 1500);
+
         } catch (err) {
-            console.error(err);
-            toast.error("Network error");
+            console.error("Save error:", err);
+            const message = err.response?.data?.message || "Failed to save class";
+            toast.error(message);
         }
     };
 
