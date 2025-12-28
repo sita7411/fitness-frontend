@@ -1,9 +1,9 @@
 // src/pages/AllNutritionPlans.jsx
 import React, { useState, useEffect, useMemo } from "react";
-import axios from "axios";
 import { Edit, Trash2, Eye, X, ChevronDown, Plus, Trash2 as TrashSmall } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useAdminAuth } from "../context/AdminAuthContext";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -42,6 +42,7 @@ const normalizeMeal = () => ({
 const API_URL = import.meta.env.VITE_API_URL;
 
 export default function AllNutritionPlans() {
+    const { api } = useAdminAuth();
     const [plans, setPlans] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
@@ -56,7 +57,7 @@ export default function AllNutritionPlans() {
     const fetchPlans = async () => {
         try {
             setLoading(true);
-            const res = await axios.get(`${API_URL}/api/nutrition/`);
+            const res = await api.get(`/api/nutrition/`);
             setPlans(res.data);
         } catch (err) {
             toast.error("Failed to load plans");
@@ -183,10 +184,10 @@ export default function AllNutritionPlans() {
 
         try {
             if (modalType === "add") {
-                await axios.post(`${API_URL}/api/nutrition`, formData);
+                await api.post(`/api/nutrition`, formData);
                 toast.success("Plan created!");
             } else {
-                await axios.put(`${API_URL}/api/nutrition/${editPlan._id}`, formData);
+                await api.put(`/api/nutrition/${editPlan._id}`, formData);
                 toast.success("Plan updated!");
             }
             fetchPlans();
@@ -205,7 +206,7 @@ export default function AllNutritionPlans() {
             const newStatus = plan.status === "Active" ? "Inactive" : "Active";
 
             // Update backend
-            const res = await axios.patch(`${API_URL}/api/nutrition/${id}/status`, { status: newStatus });
+            const res = await api.patch(`/api/nutrition/${id}/status`, { status: newStatus });
 
             // Use backend response to update frontend
             setPlans(prev => prev.map(p => p._id === id ? { ...p, status: res.data.status } : p));
@@ -218,7 +219,7 @@ export default function AllNutritionPlans() {
     const deletePlan = async (id) => {
         if (!window.confirm("Delete permanently?")) return;
         try {
-            await axios.delete(`${API_URL}/api/nutrition/${id}`);
+            await api.delete(`/api/nutrition/${id}`);
             setPlans(prev => prev.filter(p => p._id !== id));
             toast.success("Deleted!");
         } catch (err) {
