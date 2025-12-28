@@ -44,7 +44,7 @@ export default function AllMembers() {
   const fetchMembers = useCallback(async (page = 1, search = "", status = "all") => {
     try {
       setLoading(true);
-      const response = await axiosAdmin.get("/admin/users", {
+      const response = await axiosAdmin.get(`/api/admin/users`, {
         params: {
           page,
           limit: ITEMS_PER_PAGE,
