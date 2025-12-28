@@ -208,7 +208,7 @@ export default function AllChallenges() {
       });
 
       await api.put(
-        "/api/challenges/${editChallenge._id}",
+        `/api/challenges/${editChallenge._id}`,
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
@@ -225,7 +225,7 @@ export default function AllChallenges() {
   const deleteChallenge = async (_id) => {
     if (!window.confirm("Delete this challenge permanently?")) return;
     try {
-      await api.delete("/api/challenges/${_id}");
+      await api.delete(`/api/challenges/${_id}`);
       toast.success("Challenge deleted");
       fetchChallenges();
     } catch (err) {
@@ -237,7 +237,7 @@ export default function AllChallenges() {
     const challenge = challenges.find((c) => c._id === _id);
     const newStatus = challenge.status === "Active" ? "Inactive" : "Active";
     try {
-      await api.patch("/api/challenges/${_id}/status", { status: newStatus });
+      await api.patch(`/api/challenges/${_id}/status`, { status: newStatus });
       setChallenges((prev) => prev.map((c) => (c._id === _id ? { ...c, status: newStatus } : c)));
     } catch (err) {
       toast.error("Status update failed");
