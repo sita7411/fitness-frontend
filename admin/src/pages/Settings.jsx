@@ -11,8 +11,7 @@ import {
   Star,
   HeartPulse,
 } from "lucide-react";
-const API_URL = import.meta.env.VITE_API_URL;
-
+import { useAdminAuth } from "../context/AdminAuthContext";
 const iconOptions = [
   { name: "Mail", component: Mail },
   { name: "Phone", component: Phone },
@@ -74,6 +73,7 @@ function Dropdown({ value, onChange, options }) {
 }
 
 export default function AdminSettingsProfessional() {
+  const { api } = useAdminAuth();
   const [logoPreview, setLogoPreview] = useState(null);
   const [logoFile, setLogoFile] = useState(null);
   const [address, setAddress] = useState("");
@@ -87,19 +87,9 @@ export default function AdminSettingsProfessional() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/settings`, {
-          credentials: "include",
-        });
+        const res = await api.get(`/api/settings`);
 
-        if (!res.ok) {
-          if (res.status === 401) {
-            toast.error("Unauthorized. Please log in as admin.");
-            return;
-          }
-          throw new Error("Failed to load settings");
-        }
-        const data = await res.json();
-
+        const data = res.data;
         setAddress(data.address || "");
         setPhone(data.phone || "");
         setEmail(data.email || "");
@@ -148,40 +138,32 @@ export default function AdminSettingsProfessional() {
     e.preventDefault();
     setSaving(true);
 
-    const formData = new FormData();
-    formData.append("address", address);
-    formData.append("phone", phone);
-    formData.append("email", email);
-    formData.append("mapEmbed", mapEmbed);
-    formData.append("floatingIcons", JSON.stringify(floatingIcons));
-    if (logoFile) formData.append("logo", logoFile);
-
     try {
-      const res = await fetch(`${API_URL}/api/settings`, {
-        method: "POST",
-        credentials: "include",
-        body: formData,
-      });
+      const formData = new FormData();
+      formData.append("address", address);
+      formData.append("phone", phone);
+      formData.append("email", email);
+      formData.append("mapEmbed", mapEmbed);
+      formData.append("floatingIcons", JSON.stringify(floatingIcons));
+      if (logoFile) formData.append("logo", logoFile);
 
+      const res = await api.post(`/api/settings`, formData);
 
-      const result = await res.json();
+      toast.success("Settings saved successfully!");
 
-      if (res.ok) {
-        toast.success("Settings saved successfully!");
-        if (result.settings?.logo) {
-          setLogoPreview(result.settings.logo);
-          setLogoFile(null); // Clear after successful upload
-        }
-      } else {
-        if (res.status === 401) {
-          toast.error("Unauthorized! Please log in as admin again.");
-        } else {
-          toast.error(result.message || "Failed to save settings");
-        }
+      // Update logo preview if new one uploaded
+      if (res.data.logo) {
+        setLogoPreview(res.data.logo);
+        setLogoFile(null);
       }
     } catch (err) {
       console.error(err);
-      toast.error("Network error. Check connection or server.");
+      const message = err.response?.data?.message || "Failed to save settings";
+      if (err.response?.status === 401) {
+        toast.error("Unauthorized! Please log in as admin again.");
+      } else {
+        toast.error(message);
+      }
     } finally {
       setSaving(false);
     }
