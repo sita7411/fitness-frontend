@@ -1,12 +1,10 @@
-// src/pages/AllClasses.jsx
+// src/pages/AllClasses.jsx// src/pages/AllClasses.jsx
 import React, { useState, useEffect, useMemo } from "react";
-import axios from "axios";
 import { Edit, Trash2, Eye, X, ChevronDown, Plus, Trash2 as TrashSmall } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-const API_URL = import.meta.env.VITE_API_URL;
 const ITEMS_PER_PAGE = 6;
-
+import { useAdminAuth } from "../context/AdminAuthContext";
 const StatusToggle = ({ status, onToggle }) => {
   const isActive = status?.toLowerCase() === "active";
   return (
@@ -37,6 +35,7 @@ const normalizeDay = (day, index) => ({
 });
 
 export default function AllClasses() {
+  const { api } = useAdminAuth();
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -53,7 +52,7 @@ export default function AllClasses() {
   const fetchClasses = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_URL}/api/classes`);
+      const res = await api.get(`/api/classes`);
       const mapped = res.data.map((c) => ({
         _id: c._id,
         name: c.title || "Untitled",
@@ -109,7 +108,7 @@ export default function AllClasses() {
 
     if (type === "edit") {
       try {
-        const res = await axios.get(`${API_URL}/api/classes/${cls._id}`);
+        const res = await api.get(`/api/classes/${cls._id}`);
         const data = res.data;
 
         setEditClass({
@@ -205,8 +204,8 @@ export default function AllClasses() {
         });
       });
 
-      await axios.put(
-        `${API_URL}/api/classes/${editClass._id}`,
+      await api.put(
+        `/api/classes/${editClass._id}`,
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
@@ -226,7 +225,7 @@ export default function AllClasses() {
   const deleteClass = async (_id) => {
     if (!window.confirm("Delete this class permanently?")) return;
     try {
-      await axios.delete(`${API_URL}/api/classes/${_id}`);
+      await api.delete(`/api/classes/${_id}`);
       setClasses((prev) => prev.filter((c) => c._id !== _id));
       toast.success("Class deleted");
     } catch (err) {
@@ -238,7 +237,7 @@ export default function AllClasses() {
     const cls = classes.find((c) => c._id === _id);
     const newStatus = cls.status === "Active" ? "Inactive" : "Active";
     try {
-      await axios.patch(`${API_URL}/api/classes/${_id}/status`, { status: newStatus });
+      await api.patch(`/api/classes/${_id}/status`, { status: newStatus });
       setClasses((prev) => prev.map((c) => (c._id === _id ? { ...c, status: newStatus } : c)));
     } catch (err) {
       toast.error("Status update failed");
