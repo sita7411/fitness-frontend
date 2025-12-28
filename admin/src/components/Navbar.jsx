@@ -19,10 +19,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAdminAuth } from "../context/AdminAuthContext";
-import axios from "axios";
 import { getSocket } from "../utils/socket";
-const API_URL = import.meta.env.VITE_API_URL;
-
 const THEME = "#e3002a";
 const iconMap = {
   workout: Dumbbell,
@@ -38,8 +35,7 @@ const iconMap = {
 
 export default function Navbar({ hideNavbar = false }) {
   const navigate = useNavigate();
-  const { admin, isLoggedIn, loading, logout } = useAdminAuth();
-
+  const { admin, isLoggedIn, loading, logout, api } = useAdminAuth();
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
@@ -71,9 +67,7 @@ export default function Navbar({ hideNavbar = false }) {
 
     const fetchNotifications = async () => {
       try {
-        const { data } = await axios.get(`${API_URL}/api/admin/notifications`, {
-          withCredentials: true,
-        });
+        const { data } = await api.get(`/api/admin/notifications`);
         if (data.success && isMounted) {
           const notifs = data.notifications || [];
           setNotifications(notifs);
@@ -125,10 +119,9 @@ export default function Navbar({ hideNavbar = false }) {
   // Mark all as read
   const markAllRead = async () => {
     try {
-      await axios.put(
-        `${API_URL}/api/admin/notifications/read-all`,
+      await api.put(
+        `/api/admin/notifications/read-all`,
         {},
-        { withCredentials: true }
       );
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
       setUnreadCount(0);
@@ -140,9 +133,7 @@ export default function Navbar({ hideNavbar = false }) {
   // Delete single notification
   const deleteNotification = async (id) => {
     try {
-      await axios.delete(`${API_URL}/admin/notifications/${id}`, {
-        withCredentials: true,
-      });
+      await api.delete(`/admin/notifications/${id}`);
       setNotifications((prev) => {
         const updated = prev.filter((n) => n._id !== id);
         setUnreadCount(updated.filter((n) => !n.isRead).length);
