@@ -23,11 +23,10 @@ import {
   XAxis,
 } from "recharts";
 import axios from "axios"; 
-const API_URL = import.meta.env.VITE_API_URL;
-
+import { useAdminAuth } from "../context/AdminAuthContext";
 export default function AdminFitnessLeaderboard() {
   const THEME = "#e3002a";
-
+  const { api } = useAdminAuth();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -47,7 +46,7 @@ export default function AdminFitnessLeaderboard() {
         setLoading(true);
         setError(null);
 
-        const response = await axios.get(`${API_URL}/api/leaderboard`); // ← Your backend endpoint
+        const response = await api.get(`/api/leaderboard`); // ← Your backend endpoint
         const leaderboardData = response.data;
 
         // Ensure rank is correct (backend already ranks, but just in case)
