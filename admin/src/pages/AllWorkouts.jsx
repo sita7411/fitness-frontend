@@ -1,11 +1,10 @@
 // src/pages/AllWorkouts.jsx
 import React, { useState, useEffect, useMemo } from "react";
-import axios from "axios";
 import { Edit, Trash2, Eye, X, ChevronDown, Plus, Trash2 as TrashSmall } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { v4 as uuidv4 } from 'uuid';
-const API_URL = import.meta.env.VITE_API_URL;
+import { useAdminAuth } from "../context/AdminAuthContext";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -28,6 +27,7 @@ const StatusToggle = ({ status, onToggle }) => {
 };
 
 export default function AllWorkouts() {
+    const { api } = useAdminAuth();
     const [workouts, setWorkouts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
@@ -64,7 +64,7 @@ export default function AllWorkouts() {
     const fetchWorkouts = async () => {
         try {
             setLoading(true);
-            const res = await axios.get(`${API_URL}/api/programs`);
+            const res = await api.get(`/api/programs`);
             const mapped = res.data.map(w => ({
                 _id: w._id,
                 id: w.id,
@@ -116,7 +116,7 @@ export default function AllWorkouts() {
 
         if (type === "edit") {
             try {
-                const res = await axios.get(`${API_URL}/api/programs/${workout.id}`);
+                const res = await api.get(`/api/programs/${workout.id}`);
                 const data = res.data;
 
                 setEditProgram({
@@ -207,8 +207,8 @@ export default function AllWorkouts() {
             console.log("🚀 Sending PUT request to backend...");
 
             // ← THIS IS THE FIX: capture the response
-            const response = await axios.put(
-                `${API_URL}/api/programs/${editProgram.id}`,
+            const response = await api.put(
+                `/api/programs/${editProgram.id}`,
                 formData
             );
 
@@ -234,7 +234,7 @@ export default function AllWorkouts() {
     const deleteWorkout = async (id) => {
         if (!window.confirm("Delete this program permanently?")) return;
         try {
-            await axios.delete(`${API_URL}/api/programs/${id}`);
+            await api.delete(`/api/programs/${id}`);
             setWorkouts(prev => prev.filter(w => w.id !== id));
             toast.success("Program deleted");
         } catch (err) {
@@ -246,7 +246,7 @@ export default function AllWorkouts() {
         const workout = workouts.find(w => w.id === id);
         const newStatus = workout.status === "Active" ? "Inactive" : "Active";
         try {
-            await axios.patch(`${API_URL}/api/programs/${id}/status`, { status: newStatus });
+            await api.patch(`/api/programs/${id}/status`, { status: newStatus });
             setWorkouts(prev => prev.map(w => w.id === id ? { ...w, status: newStatus } : w));
         } catch (err) {
             toast.error("Status update failed");
