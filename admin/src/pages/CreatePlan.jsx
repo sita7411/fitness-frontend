@@ -5,7 +5,7 @@ import { Plus, Trash2, X, Image, ArrowUpRight, Download, ChevronDown, ChevronUp,
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
-const API_URL = import.meta.env.VITE_API_URL;
+import { useAdminAuth } from "../context/AdminAuthContext";
 
 const THEME = "#e3002a";
 const LIGHT_BORDER = "#e5e7eb";
@@ -277,6 +277,7 @@ const MealCard = ({ meal, dayIndex, onUpdateMeal, onRemoveMeal }) => {
 
 // ---------------- Admin Nutrition Page ----------------
 export default function CreateNutritionPlan() {
+  const { api } = useAdminAuth();
   const [plan, setPlan] = useState({
     title: "",
     subtitle: "",
@@ -398,78 +399,76 @@ export default function CreateNutritionPlan() {
   };
 
   const handleSave = async () => {
-    if (!plan.title.trim()) {
-      toast.error("Please enter a plan title!");
-      return;
-    }
+  if (!plan.title.trim()) {
+    toast.error("Please enter a plan title!");
+    return;
+  }
 
-    try {
-      const formData = new FormData();
+  try {
+    const formData = new FormData();
 
-      // 1. Clean JSON data (without files)
-      const cleanPlan = {
-        title: plan.title.trim(),
-        subtitle: plan.subtitle?.trim() || "",
-        description: plan.description?.trim() || "",
-        level: plan.level || "Beginner",
-        price: Number(plan.price) || 0,
-        plans: plan.plans || ["Basic"], // ensure at least Basic
-        days: plan.days.map((day) => ({
-          title: day.title.trim(),
-          meals: day.meals.map((meal) => ({
-            type: meal.type || "Breakfast",
-            title: meal.title.trim() || "Untitled Meal",
-            description: meal.description?.trim() || "",
-            ingredients: (meal.ingredients || []).filter(Boolean),
-            instructions: (meal.instructions || []).filter(Boolean),
-            tools: (meal.tools || []).filter(Boolean),
-            notes: (meal.notes || []).filter(Boolean),
-            prepTime: Number(meal.prepTime) || 10,
-            cookTime: Number(meal.cookTime) || 20,
-            difficulty: meal.difficulty || "Easy",
-            mealType: meal.mealType || "Veg",
-            nutrition: {
-              calories: Number(meal.nutrition?.calories) || 0,
-              protein: Number(meal.nutrition?.protein) || 0,
-              carbs: Number(meal.nutrition?.carbs) || 0,
-              fat: Number(meal.nutrition?.fat) || 0,
-              cholesterol: Number(meal.nutrition?.cholesterol) || 0,
-              sodium: Number(meal.nutrition?.sodium) || 0,
-            },
-            // thumbnail will be handled via files below (we send null or omit)
-            thumbnail: null,
-          })),
+    // Clean payload (no files, no frontend IDs)
+    const cleanPlan = {
+      title: plan.title.trim(),
+      subtitle: plan.subtitle?.trim() || "",
+      description: plan.description?.trim() || "",
+      level: plan.level || "Beginner",
+      price: Number(plan.price) || 0,
+      plans: plan.plans.length > 0 ? plan.plans : ["Basic"],
+      days: plan.days.map((day) => ({
+        title: day.title.trim() || `Day ${plan.days.indexOf(day) + 1}`,
+        meals: day.meals.map((meal) => ({
+          type: meal.type || "Breakfast",
+          title: meal.title.trim() || "Untitled Meal",
+          description: meal.description?.trim() || "",
+          ingredients: (meal.ingredients || []).filter(Boolean),
+          instructions: (meal.instructions || []).filter(Boolean),
+          tools: (meal.tools || []).filter(Boolean),
+          notes: (meal.notes || []).filter(Boolean),
+          prepTime: Number(meal.prepTime) || 10,
+          cookTime: Number(meal.cookTime) || 20,
+          difficulty: meal.difficulty || "Easy",
+          mealType: meal.mealType || "Veg",
+          nutrition: {
+            calories: Number(meal.nutrition?.calories) || 0,
+            protein: Number(meal.nutrition?.protein) || 0,
+            carbs: Number(meal.nutrition?.carbs) || 0,
+            fat: Number(meal.nutrition?.fat) || 0,
+            cholesterol: Number(meal.nutrition?.cholesterol) || 0,
+            sodium: Number(meal.nutrition?.sodium) || 0,
+          },
         })),
-      };
+      })),
+    };
 
-      formData.append("data", JSON.stringify(cleanPlan));
+    formData.append("data", JSON.stringify(cleanPlan));
 
-      // 2. Cover Image
-      if (plan.coverImage?.file) {
-        formData.append("coverImage", plan.coverImage.file);
-      }
-
-      // 3. Meal Thumbnails — CRITICAL FIX: Use indexed fieldnames!
-      plan.days.forEach((day, dayIdx) => {
-        day.meals.forEach((meal, mealIdx) => {
-          if (meal.thumbnail?.file) {
-            formData.append(`meal-${dayIdx}-${mealIdx}`, meal.thumbnail.file);
-          }
-        });
-      });
-
-      // Send to backend
-      const res = await axios.post(`${API_URL}/api/nutrition/`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-
-      toast.success("Nutrition plan saved successfully!");
-      console.log("Saved plan:", res.data);
-    } catch (err) {
-      console.error("Save error:", err.response?.data || err);
-      toast.error(err.response?.data?.message || "Failed to save plan!");
+    // Cover Image
+    if (plan.coverImage?.file) {
+      formData.append("coverImage", plan.coverImage.file);
     }
-  };
+
+    // Meal Thumbnails – indexed naming (backend expects this format)
+    plan.days.forEach((day, dayIdx) => {
+      day.meals.forEach((meal, mealIdx) => {
+        if (meal.thumbnail?.file) {
+          formData.append(`meal-${dayIdx}-${mealIdx}`, meal.thumbnail.file);
+        }
+      });
+    });
+
+    const res = await api.post(`/api/nutrition/`, formData);
+
+    toast.success("Nutrition plan saved successfully!");
+    console.log("Saved:", res.data);
+
+
+  } catch (err) {
+    console.error("Save error:", err);
+    const message = err.response?.data?.message || "Failed to save nutrition plan";
+    toast.error(message);
+  }
+};
 
   return (
     <div className="min-h-screen bg-white rounded-lg py-10 px-6">
