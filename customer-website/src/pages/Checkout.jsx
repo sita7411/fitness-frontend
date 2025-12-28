@@ -456,7 +456,9 @@ const Checkout = () => {
         nutrition: nutritionForBackend,
         total: safeTotal,
         membershipId: membershipId,
-      });
+      },
+         { headers }
+      );
 
       toast.success("Purchase completed successfully!");
       setIsOtpVerified(true);
