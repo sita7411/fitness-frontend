@@ -14,7 +14,7 @@ import {
   Calendar,
 } from "lucide-react";
 import { getSocket } from "../utils/socket.js";
-const API_URL = import.meta.env.VITE_API_URL 
+import { useAdminAuth } from "../context/AdminAuthContext";
 const THEME = "#e3002a";
 
 const iconMap = {
@@ -30,6 +30,7 @@ const iconMap = {
 };
 
 export default function AdminNotifications() {
+  const { api } = useAdminAuth();
   const [activeTab, setActiveTab] = useState("all");
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -39,11 +40,7 @@ export default function AdminNotifications() {
     try {
       setLoading(true);
       setError(null);
-
-      const { data } = await axios.get(
-        `${API_URL}/api/admin/notifications`,
-        { withCredentials: true }
-      );
+      const { data } = await api.get(`/api/admin/notifications`);
 
       console.log("Admin Notifications API Response:", data);
 
@@ -115,11 +112,7 @@ export default function AdminNotifications() {
 
   const markAllRead = async () => {
     try {
-      await axios.put(
-        `${API_URL}/api/admin/notifications/read-all`,
-        {},
-        { withCredentials: true }
-      );
+     await api.put(`/api/admin/notifications/read-all`);
       setNotifications((prev) =>
         prev.map((n) => ({ ...n, isRead: true }))
       );
@@ -130,10 +123,7 @@ export default function AdminNotifications() {
 
   const deleteNotification = async (id) => {
     try {
-      const response = await axios.delete(
-       `${API_URL}/api/admin/notifications/${id}`,
-        { withCredentials: true }
-      );
+   const response = await api.delete(`/api/admin/notifications/${id}`);
 
       if (response.data.success) {
         setNotifications((prev) => prev.filter((n) => n._id !== id));
