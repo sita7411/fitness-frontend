@@ -12,12 +12,12 @@ import {
   TrendingUp, Target, Award, Plus, RefreshCw,
 } from "lucide-react";
 import { getSocket } from "../utils/socket.js";
-const API_URL = import.meta.env.VITE_API_URL;
-
+import { useAdminAuth } from "../context/AdminAuthContext";
 const THEME = "#e3002a";
 const COLORS = ["#e3002a", "#5c9fff", "#ff9f5c", "#8b5cf6"];
 
 export default function AdminDashboard() {
+  const { api } = useAdminAuth();
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -73,14 +73,14 @@ export default function AdminDashboard() {
         weeklyWorkoutsRes,
         trendingRes,
       ] = await Promise.all([
-        axios.get(`${API_URL}/api/admin/users`, { params: { page: 1, limit: 200, sort: 'joinDate', order: 'desc' }, withCredentials: true }).catch(() => ({ data: { success: false } })),
-        axios.get(`${API_URL}/api/admin/revenue/today`, { withCredentials: true }).catch(() => ({ data: { revenue: 124000 } })),
-        axios.get(`${API_URL}/api/admin/revenue/performance`, { withCredentials: true }).catch(() => ({ data: { data: [] } })),
-        axios.get(`${API_URL}/api/admin/revenue/last-7-days`, { withCredentials: true }).catch(() => ({ data: { success: false } })),
-        axios.get(`${API_URL}/api/admin/revenue/membership/distribution`, { withCredentials: true }).catch(() => ({ data: {} })),
-        axios.get(`${API_URL}/api/admin/revenue/membership/summary`, { withCredentials: true }).catch(() => ({ data: {} })),
-        axios.get(`${API_URL}/api/programs/weekly-stats`, { withCredentials: true }).catch(() => ({ data: { success: false } })),
-        axios.get(`${API_URL}/api/programs/trending?days=7`, { withCredentials: true }).catch(() => ({ data: { success: false, data: [] } })),
+        api.get(`/api/admin/users`, { params: { page: 1, limit: 200, sort: 'joinDate', order: 'desc' } }).catch(() => ({ data: { success: false } })),
+        api.get(`/api/admin/revenue/today`).catch(() => ({ data: { revenue: 124000 } })),
+        api.get(`/api/admin/revenue/performance`).catch(() => ({ data: { data: [] } })),
+        api.get(`/api/admin/revenue/last-7-days`).catch(() => ({ data: { success: false } })),
+        api.get(`/api/admin/revenue/membership/distribution`).catch(() => ({ data: {} })),
+        api.get(`/api/admin/revenue/membership/summary`).catch(() => ({ data: {} })),
+        api.get(`/api/programs/weekly-stats`).catch(() => ({ data: { success: false } })),
+        api.get(`/api/programs/trending`, { params: { days: 7 } }).catch(() => ({ data: { success: false, data: [] } })),
       ]);
 
       // Members + Signups
@@ -167,8 +167,8 @@ export default function AdminDashboard() {
   const loadGoals = async () => {
     try {
       const [goalsRes, statsRes] = await Promise.all([
-        axios.get(`${API_URL}/api/admin/goals/current`, { withCredentials: true }),
-        axios.get(`${API_URL}/api/admin/goals/stats`, { withCredentials: true })
+        api.get(`/api/admin/goals/current`),
+        api.get(`/api/admin/goals/stats`)
       ]);
 
       if (!goalsRes.data.success || !statsRes.data.success) {
@@ -227,7 +227,7 @@ export default function AdminDashboard() {
   // NEW: Fetch Top Performer of the Month
   const fetchTopPerformer = async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/leaderboard/monthly-top`, { withCredentials: true });
+      const res = await api.get(`/api/leaderboard/monthly-top`);
       if (res.data && res.data.name && res.data.name !== "No activity yet this month") {
         setTopPerformer({
           name: res.data.name || "Unknown Member",
@@ -265,9 +265,9 @@ export default function AdminDashboard() {
 
     try {
       if (editingGoal) {
-        await axios.put(`${API_URL}/api/admin/goals/update/${editingGoal._id}`, newGoal, { withCredentials: true });
+        await api.put(`/api/admin/goals/update/${editingGoal._id}`, newGoal);
       } else {
-        await axios.post(`${API_URL}/api/admin/goals/add`, newGoal, { withCredentials: true });
+        await api.post(`/api/admin/goals/add`, newGoal);
       }
 
       await loadGoals();
@@ -283,7 +283,7 @@ export default function AdminDashboard() {
   const handleDeleteGoal = async (id) => {
     if (!confirm("Delete this goal permanently?")) return;
     try {
-      await axios.delete(`${API_URL}/api/admin/goals/delete/${id}`, { withCredentials: true });
+      await api.delete(`/api/admin/goals/delete/${id}`, { withCredentials: true });
       loadGoals();
     } catch (err) {
       alert("Delete failed");
@@ -316,7 +316,7 @@ export default function AdminDashboard() {
 
       // Initial live activity
       try {
-        const res = await axios.get(`${API_URL}/api/admin/notifications?limit=10`, { withCredentials: true });
+        const res = await api.get(`/api/admin/notifications?limit=10`, { withCredentials: false });
         if (res.data.success && res.data.notifications?.length > 0) {
           const activities = res.data.notifications
             .filter(n => n.admin && n.message && n.createdAt)
@@ -436,7 +436,7 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
         {/* Left Column */}
         <div className="xl:col-span-2 space-y-6">
-          {/* Revenue Performance */ /* ... unchanged ... */ }
+          {/* Revenue Performance */ /* ... unchanged ... */}
           <div className="bg-white/80 backdrop-blur rounded-2xl p-6 shadow">
             <div className="flex items-center justify-between mb-3">
               <div>
@@ -658,41 +658,41 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          <motion.div 
-  whileHover={{ scale: 1.02 }} 
-  className="rounded-2xl p-5 relative overflow-hidden shadow text-white"
-  style={{ background: `linear-gradient(135deg, ${THEME} 0%, #c70123 100%)` }}
->
-  {/* Background Award Icon */}
-  <Award className="absolute top-4 right-4 opacity-20" size={48} />
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            className="rounded-2xl p-5 relative overflow-hidden shadow text-white"
+            style={{ background: `linear-gradient(135deg, ${THEME} 0%, #c70123 100%)` }}
+          >
+            {/* Background Award Icon */}
+            <Award className="absolute top-4 right-4 opacity-20" size={48} />
 
-  <div className="relative z-10 flex items-center gap-5">
- 
+            <div className="relative z-10 flex items-center gap-5">
 
-    {/* Text Content */}
-    <div className="flex-1 min-w-0">
-      <p className="text-sm opacity-90">Performer of the Month</p>
-      <h3 className="text-2xl font-bold mt-1 truncate">{topPerformer.name}</h3>
-      
-      <div className="grid grid-cols-2 gap-4 mt-4 text-sm">
-        <div className="flex items-center gap-2">
-          <Flame size={18} className="text-orange-300" />
-          <div>
-            <div className="font-semibold">{topPerformer.workouts}</div>
-            <div className="opacity-80 text-xs">Workouts</div>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Activity size={18} className="text-green-300" />
-          <div>
-            <div className="font-semibold">{topPerformer.calories?.toLocaleString() || 0}</div>
-            <div className="opacity-80 text-xs">Cal Burned</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</motion.div>
+
+              {/* Text Content */}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm opacity-90">Performer of the Month</p>
+                <h3 className="text-2xl font-bold mt-1 truncate">{topPerformer.name}</h3>
+
+                <div className="grid grid-cols-2 gap-4 mt-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Flame size={18} className="text-orange-300" />
+                    <div>
+                      <div className="font-semibold">{topPerformer.workouts}</div>
+                      <div className="opacity-80 text-xs">Workouts</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Activity size={18} className="text-green-300" />
+                    <div>
+                      <div className="font-semibold">{topPerformer.calories?.toLocaleString() || 0}</div>
+                      <div className="opacity-80 text-xs">Cal Burned</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
           {/* Rest of sidebar unchanged */}
           <div className="bg-white shadow-lg rounded-2xl p-6">
             <h4 className="text-sm font-semibold text-gray-600 mb-4">Plan Distribution</h4>
