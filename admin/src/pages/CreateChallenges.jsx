@@ -14,8 +14,7 @@ import {
   Check,
   UploadCloud
 } from "lucide-react";
-const API_URL = import.meta.env.VITE_API_URL;
-
+import { useAdminAuth } from "../context/AdminAuthContext";
 const THEME = "#e3002a";
 const LIGHT_BORDER = "#e5e7eb";
 const LIGHT_SHADOW = "0 4px 16px rgba(0,0,0,0.05)";
@@ -263,6 +262,7 @@ const DayCard = ({ day, dayIndex, totalDays, onAddStep, onRemoveDay, onUpdateDay
 
 /* ------------------- Main Component ------------------- */
 export default function CreateChallenges() {
+  const { api } = useAdminAuth();
   const [data, setData] = useState({
     title: "",
     description: "",
@@ -417,27 +417,21 @@ export default function CreateChallenges() {
           if (s.image?.file) form.append(`image_${di}_${si}`, s.image.file);
         });
       });
+      const res = await api.post(`/api/challenges/create`, form);
 
-      const res = await fetch(`${API_URL}/api/challenges/create`, {
-        method: "POST",
-        body: form,
-       
-                  credentials: "include",
-
-      });
-
-      const resData = await res.json();
-      if (!res.ok) {
-        toast.error(resData.message || "Server error");
-        console.error(resData);
-        return;
-      }
 
       toast.success("Challenge created successfully!");
-      console.log("Saved:", resData);
+      console.log("Challenge saved:", res.data);
     } catch (err) {
-      console.error(err);
-      toast.error("Something went wrong");
+      console.error("Submit error:", err);
+
+      // Better error handling
+      const message =
+        err.response?.data?.message ||
+        err.message ||
+        "Failed to create challenge";
+
+      toast.error(message);
     }
   };
 
