@@ -476,7 +476,7 @@ difficulty: workout.level,
           reps: ex.type === "reps" ? Number(ex.reps) || 12 : undefined,
           sets: ex.type === "reps" ? Number(ex.sets) || 3 : undefined,
           section: ex.section || "Workout",
-          notes: ex.notes?.trim() || "",
+description: ex.notes?.trim() || "",
         })),
       })),
     };
