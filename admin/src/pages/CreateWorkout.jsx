@@ -457,8 +457,8 @@ export default function CreateWorkout() {
     // 3. Clean program data (no frontend IDs, no file objects)
     const programData = {
       title: workout.title.trim(),
-     desc: workout.description.trim(),
-    duration: workout.duration,
+desc: workout.description.trim(),
+        duration: workout.duration,
 difficulty: workout.level,
         trainingType: workout.trainingType,
       focus: workout.focus,
@@ -480,7 +480,7 @@ description: ex.notes?.trim() || "",
         })),
       })),
     };
-
+console.log("Sending programData:", programData);
     formData.append("program", JSON.stringify(programData));
 
     const res = await api.post(`/api/programs`, formData);
