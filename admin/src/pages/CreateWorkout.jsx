@@ -457,10 +457,10 @@ export default function CreateWorkout() {
     // 3. Clean program data (no frontend IDs, no file objects)
     const programData = {
       title: workout.title.trim(),
-      description: workout.description.trim(),
-      duration: workout.duration,
-      level: workout.level,
-      trainingType: workout.trainingType,
+     desc: workout.description.trim(),
+    duration: workout.duration,
+difficulty: workout.level,
+        trainingType: workout.trainingType,
       focus: workout.focus,
       equipment: workout.equipment || [],
       price: Number(workout.price) || 0,
